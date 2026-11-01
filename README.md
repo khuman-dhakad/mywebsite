@@ -112,4 +112,3 @@ npx playwright test
 - **Privacy Protection**: EXIF/GPS coordinates stripped from photos on the client before upload.
 - **Rate-Limited Login**: 5 attempts per 15 minutes before lockout to thwart brute-force password guessing.
 - Full threat model details available in `SECURITY.md`.
-
