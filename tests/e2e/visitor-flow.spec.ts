@@ -17,14 +17,13 @@ test.describe("Visitor Experience & Mobile Flow", () => {
   });
 
   test("should render valid WhatsApp and Tel call action links", async ({ page }) => {
-    // Check Hero WhatsApp CTA
-    const heroWhatsApp = page.locator("a:has-text('Book on WhatsApp')").first();
+    const hero = page.locator("main section").first();
+    const heroWhatsApp = hero.getByRole("link", { name: "Book on WhatsApp" });
     await expect(heroWhatsApp).toBeVisible();
     const waHref = await heroWhatsApp.getAttribute("href");
     expect(waHref).toMatch(/^https:\/\/wa\.me\/91\d{10}\?text=/);
 
-    // Check Call Now CTA
-    const callBtn = page.locator("a:has-text('Call Now')").first();
+    const callBtn = hero.getByRole("link", { name: /Call Now:/ });
     await expect(callBtn).toBeVisible();
     const telHref = await callBtn.getAttribute("href");
     expect(telHref).toMatch(/^tel:\+?91/);
@@ -56,10 +55,28 @@ test.describe("Visitor Experience & Mobile Flow", () => {
     // Verify dialog appears
     const lightbox = page.locator("div[role='dialog'][aria-label='Image Lightbox']");
     await expect(lightbox).toBeVisible();
+    await expect(lightbox.getByRole("button", { name: /Close Lightbox/ })).toBeFocused();
 
     // Press Escape to dismiss
     await page.keyboard.press("Escape");
     await expect(lightbox).not.toBeVisible();
+    await expect(firstPhoto).toBeFocused();
+    expect(await page.evaluate(() => document.body.style.overflow)).toBe("");
+
+    // Re-open and dismiss via clicking the backdrop corner
+    await firstPhoto.click();
+    await expect(lightbox).toBeVisible();
+    await lightbox.click({ position: { x: 10, y: 10 } });
+    await expect(lightbox).not.toBeVisible();
+  });
+
+  test("should filter gallery photos by category tab", async ({ page }) => {
+    const gallerySection = page.locator("#gallery");
+    const roomsTab = gallerySection.getByRole("tab", { name: "Rooms" });
+    await roomsTab.click();
+    await expect(roomsTab).toHaveAttribute("aria-selected", "true");
+    const visibleButtons = gallerySection.locator("button[aria-label^='View photo']");
+    expect(await visibleButtons.count()).toBeGreaterThanOrEqual(1);
   });
 
   test("should render JSON-LD structured data for Hotel and FAQPage", async ({ page }) => {
@@ -72,9 +89,15 @@ test.describe("Visitor Experience & Mobile Flow", () => {
     expect(firstJson).toContain('"currenciesAccepted":"INR"');
   });
 
-  test("should show floating WhatsApp button on all viewport sizes", async ({ page }) => {
+  test("should show floating WhatsApp button on tablet and desktop only", async ({ page }) => {
     const floatingBtn = page.locator("aside[aria-label='WhatsApp quick chat'] a");
-    await expect(floatingBtn).toBeVisible();
+    const viewportWidth = page.viewportSize()?.width ?? 1280;
+
+    if (viewportWidth < 768) {
+      await expect(floatingBtn).toBeHidden();
+    } else {
+      await expect(floatingBtn).toBeVisible();
+    }
   });
 
   test("should display mobile sticky bottom bar with Call, WhatsApp and Directions on mobile viewport", async ({ page, isMobile }) => {

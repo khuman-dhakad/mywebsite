@@ -4,6 +4,9 @@ import {
   roomSchema,
   photoSchema,
   loginSchema,
+  uuidSchema,
+  photoDetailsSchema,
+  reorderIdsSchema,
 } from "@/lib/validations/hotel";
 
 describe("Zod Validation Schemas", () => {
@@ -122,6 +125,38 @@ describe("Zod Validation Schemas", () => {
       expect(loginSchema.safeParse({ email: "admin@hotel.com", password: "password123" }).success).toBe(true);
       expect(loginSchema.safeParse({ email: "invalid-email", password: "password123" }).success).toBe(false);
       expect(loginSchema.safeParse({ email: "admin@hotel.com", password: "123" }).success).toBe(false);
+    });
+  });
+
+  describe("uuidSchema, photoDetailsSchema, and reorderIdsSchema", () => {
+    const validUuid = "550e8400-e29b-41d4-a716-446655440000";
+
+    it("should enforce strict UUID format for item IDs", () => {
+      expect(uuidSchema.safeParse(validUuid).success).toBe(true);
+      expect(uuidSchema.safeParse("not-a-uuid").success).toBe(false);
+    });
+
+    it("should validate photo metadata updates", () => {
+      expect(
+        photoDetailsSchema.safeParse({
+          id: validUuid,
+          alt_text: "Sunlit courtyard with sandstone arches",
+          caption: "Morning courtyard",
+          category: "Courtyard",
+        }).success
+      ).toBe(true);
+      expect(
+        photoDetailsSchema.safeParse({
+          id: validUuid,
+          alt_text: "hi",
+        }).success
+      ).toBe(false);
+    });
+
+    it("should validate non-empty ordered UUID arrays", () => {
+      expect(reorderIdsSchema.safeParse([validUuid]).success).toBe(true);
+      expect(reorderIdsSchema.safeParse([]).success).toBe(false);
+      expect(reorderIdsSchema.safeParse(["invalid-id"]).success).toBe(false);
     });
   });
 });
