@@ -1,6 +1,12 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+/**
+ * Lightweight neutral stone SVG shimmer placeholder for Next.js remote images
+ */
+export const SHIMMER_BLUR_DATA_URL =
+  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgZmlsbD0iI2U3ZTVlNCIvPjwvc3ZnPg==";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -123,7 +129,7 @@ export async function compressAndStripExif(
   file: File,
   maxDimension = 1600,
   quality = 0.82
-): Promise<{ blob: Blob; width: number; height: number; fileName: string }> {
+): Promise<{ blob: Blob; width: number; height: number; fileName: string; contentType: string }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("Failed to read file"));
@@ -165,10 +171,22 @@ export async function compressAndStripExif(
               reject(new Error("Failed to compress image"));
               return;
             }
-            // Generate randomized unique filename for security
+            const extension =
+              blob.type === "image/webp"
+                ? "webp"
+                : blob.type === "image/jpeg"
+                  ? "jpg"
+                  : blob.type === "image/png"
+                    ? "png"
+                    : null;
+            if (!extension) {
+              reject(new Error("Unsupported compressed image format"));
+              return;
+            }
+
             const randSuffix = Math.random().toString(36).substring(2, 10);
-            const fileName = `img_${Date.now()}_${randSuffix}.webp`;
-            resolve({ blob, width, height, fileName });
+            const fileName = `img_${Date.now()}_${randSuffix}.${extension}`;
+            resolve({ blob, width, height, fileName, contentType: blob.type });
           },
           "image/webp",
           quality
