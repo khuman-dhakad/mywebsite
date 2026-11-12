@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { MessageCircle, Users, Bed, Check, Ban } from "lucide-react";
 import { Room, HotelProfile } from "@/types/database";
-import { formatRupees, buildWhatsAppUrl } from "@/lib/utils";
+import { formatRupees, buildWhatsAppUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/utils";
 
 interface RoomsProps {
   rooms: Room[];
@@ -63,6 +63,8 @@ export function Rooms({ rooms, profile }: RoomsProps) {
                         alt={`${room.name} at ${profile.name}`}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        placeholder="blur"
+                        blurDataURL={SHIMMER_BLUR_DATA_URL}
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (

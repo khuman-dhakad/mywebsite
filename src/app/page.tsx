@@ -48,23 +48,29 @@ export default async function HomePage() {
       <main className="flex-1">
         <Hero profile={profile} />
         <About profile={profile} />
-        <Rooms rooms={rooms} profile={profile} />
-        <Gallery photos={photos} hotelName={profile.name} />
-        <Amenities amenities={amenities} />
-        <Location profile={profile} />
+        {siteConfig.features.enableRooms && <Rooms rooms={rooms} profile={profile} />}
+        {siteConfig.features.enableGallery && <Gallery photos={photos} hotelName={profile.name} />}
+        {siteConfig.features.enableAmenities && amenities.length > 0 && (
+          <Amenities amenities={amenities} />
+        )}
+        {siteConfig.features.enableLocation && <Location profile={profile} />}
         <Contact profile={profile} />
-        <Faq faqs={faqs} profile={profile} />
+        {siteConfig.features.enableFaq && faqs.length > 0 && (
+          <Faq faqs={faqs} profile={profile} />
+        )}
       </main>
 
       {/* Footer */}
       <Footer profile={profile} />
 
       {/* Floating WhatsApp Action Button */}
-      <FloatingWhatsApp
-        whatsappNumber={profile.whatsapp_number}
-        hotelName={profile.name}
-        prefillMessage={profile.whatsapp_prefill}
-      />
+      {siteConfig.features.enableWhatsAppBooking && (
+        <FloatingWhatsApp
+          whatsappNumber={profile.whatsapp_number}
+          hotelName={profile.name}
+          prefillMessage={profile.whatsapp_prefill}
+        />
+      )}
 
       {/* Mobile Sticky Bottom Bar (Call, WhatsApp, Directions) */}
       <MobileBottomBar
