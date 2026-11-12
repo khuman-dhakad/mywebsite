@@ -18,10 +18,21 @@ export default function AdminLoginPage() {
   const [isLockedOut, setIsLockedOut] = useState(false);
 
   useEffect(() => {
-    // Check local storage lockout state
+    // Restore persisted lockout & failed attempt counters
     const lockExpiry = localStorage.getItem("admin_lock_expiry");
     if (lockExpiry && parseInt(lockExpiry, 10) > Date.now()) {
       setIsLockedOut(true);
+    } else if (lockExpiry) {
+      localStorage.removeItem("admin_lock_expiry");
+      localStorage.removeItem("admin_login_attempts");
+    }
+
+    const storedAttempts = localStorage.getItem("admin_login_attempts");
+    if (storedAttempts) {
+      const parsed = parseInt(storedAttempts, 10);
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        setAttempts(parsed);
+      }
     }
   }, []);
 
@@ -38,7 +49,12 @@ export default function AdminLoginPage() {
       return;
     }
 
-    if (attempts >= 5) {
+    const currentAttempts = Math.max(
+      attempts,
+      parseInt(localStorage.getItem("admin_login_attempts") || "0", 10) || 0
+    );
+
+    if (currentAttempts >= 5) {
       const lockUntil = now + 15 * 60 * 1000;
       localStorage.setItem("admin_lock_expiry", lockUntil.toString());
       setIsLockedOut(true);
@@ -58,21 +74,38 @@ export default function AdminLoginPage() {
       });
 
       if (authError || !authData.user) {
-        setAttempts((prev) => prev + 1);
+        const nextAttempts = currentAttempts + 1;
+        setAttempts(nextAttempts);
+        localStorage.setItem("admin_login_attempts", nextAttempts.toString());
+        if (nextAttempts >= 5) {
+          localStorage.setItem("admin_lock_expiry", (Date.now() + 15 * 60 * 1000).toString());
+          setIsLockedOut(true);
+        }
         // Generic error message to prevent account enumeration
         setErrorMessage("Invalid email or password.");
         setLoading(false);
         return;
       }
 
-      // 2. Optional TOTP 2FA Verification
-      if (showTotpField && totpCode) {
+      // 2. Optional TOTP 2FA Verification (resolve real factor UUID)
+      if (showTotpField && totpCode.trim()) {
+        const { data: factorsData, error: listError } = await supabase.auth.mfa.listFactors();
+        const totpFactor = factorsData?.totp?.find((f) => f.status === "verified") || factorsData?.totp?.[0];
+
+        if (listError || !totpFactor) {
+          await supabase.auth.signOut();
+          setErrorMessage("2FA factor not found or not enrolled for this account.");
+          setLoading(false);
+          return;
+        }
+
         const { error: mfaError } = await supabase.auth.mfa.challengeAndVerify({
-          factorId: "totp",
+          factorId: totpFactor.id,
           code: totpCode.trim(),
         });
 
         if (mfaError) {
+          await supabase.auth.signOut();
           setErrorMessage("Invalid 2FA code.");
           setLoading(false);
           return;
@@ -95,8 +128,9 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // Reset failed attempt counter on success
+      // Reset failed attempt counters on success
       localStorage.removeItem("admin_lock_expiry");
+      localStorage.removeItem("admin_login_attempts");
       router.push("/admin");
       router.refresh();
     } catch {
