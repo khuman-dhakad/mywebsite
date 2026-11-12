@@ -66,20 +66,31 @@ export function IdleTimer() {
     };
   }, [router]);
 
+  const handleStayLoggedIn = () => {
+    window.dispatchEvent(new Event("mousedown"));
+  };
+
   if (!showWarning) return null;
 
   return (
     <div
       role="alert"
-      className="fixed bottom-6 right-6 z-50 p-4 rounded-xl bg-amber-500 text-stone-950 shadow-2xl flex items-center gap-3 border-2 border-stone-900 animate-bounce"
+      className="fixed bottom-6 right-6 z-50 p-4 rounded-xl bg-amber-500 text-stone-950 shadow-2xl flex items-center gap-3 border-2 border-stone-900 max-w-sm"
     >
       <AlertTriangle className="w-6 h-6 shrink-0" />
-      <div>
+      <div className="flex-1">
         <p className="font-bold text-sm">Session Expiring Soon</p>
         <p className="text-xs">
-          Logging out in {secondsRemaining} seconds due to inactivity. Move mouse to stay logged in.
+          Logging out in {secondsRemaining}s due to inactivity.
         </p>
       </div>
+      <button
+        type="button"
+        onClick={handleStayLoggedIn}
+        className="px-3 py-1.5 rounded-lg bg-stone-950 text-white text-xs font-semibold hover:bg-stone-800 transition-colors shrink-0 min-h-[36px]"
+      >
+        Stay Signed In
+      </button>
     </div>
   );
 }

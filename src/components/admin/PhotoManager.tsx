@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   UploadCloud,
@@ -12,12 +13,19 @@ import {
   ArrowUp,
   ArrowDown,
   Sparkles,
+  Edit3,
 } from "lucide-react";
 import { Photo } from "@/types/database";
 import { compressAndStripExif, validateImageMagicBytes } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { siteConfig } from "@/config/site.config";
-import { savePhotoAction, deletePhotoAction, setHeroPhotoAction } from "@/app/admin/actions";
+import {
+  savePhotoAction,
+  deletePhotoAction,
+  setHeroPhotoAction,
+  reorderPhotosAction,
+  updatePhotoDetailsAction,
+} from "@/app/admin/actions";
 
 const MAX_IMAGES = 100;
 
@@ -27,10 +35,13 @@ interface PhotoManagerProps {
 }
 
 export function PhotoManager({ initialPhotos, currentHeroUrl }: PhotoManagerProps) {
+  const router = useRouter();
   const [photos, setPhotos] = useState<Photo[]>(initialPhotos);
   const [heroUrl, setHeroUrl] = useState<string | null>(currentHeroUrl || null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+  const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,49 +62,45 @@ export function PhotoManager({ initialPhotos, currentHeroUrl }: PhotoManagerProp
 
     const supabase = createClient();
     let successCount = 0;
+    let failureCount = 0;
+    let firstFailure = "";
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+      let storagePath: string | null = null;
+      let uploaded = false;
       setUploadProgress(`Processing ${i + 1} of ${files.length}: ${file.name}...`);
 
-      // 1. File Size Validation (Max 5MB raw)
-      if (file.size > 5 * 1024 * 1024) {
-        setToast({ type: "error", text: `Skipped ${file.name}: Exceeds 5MB limit.` });
-        continue;
-      }
-
-      // 2. Validate Magic Bytes
-      const buffer = await file.slice(0, 16).arrayBuffer();
-      const magicCheck = validateImageMagicBytes(buffer);
-      if (!magicCheck.valid) {
-        setToast({
-          type: "error",
-          text: `Skipped ${file.name}: Invalid image format. Only JPEG, PNG, and WebP are allowed.`,
-        });
-        continue;
-      }
-
       try {
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error("Exceeds the 5MB file size limit.");
+        }
+
+        const buffer = await file.slice(0, 16).arrayBuffer();
+        if (!validateImageMagicBytes(buffer).valid) {
+          throw new Error("Invalid image format. Only JPEG, PNG, and WebP are allowed.");
+        }
+
         // 3. Compress & Strip EXIF / GPS Metadata Client-Side
         setUploadProgress(`Compressing & stripping GPS from ${file.name}...`);
-        const { blob, fileName } = await compressAndStripExif(file, 1600, 0.82);
+        const { blob, fileName, contentType } = await compressAndStripExif(file, 1600, 0.82);
 
         // 4. Upload to Supabase Storage: hotel-assets/{site_id}/{fileName}
         setUploadProgress(`Uploading ${file.name} to cloud storage...`);
-        const storagePath = `${siteConfig.siteId}/${fileName}`;
+        storagePath = `${siteConfig.siteId}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from("hotel-assets")
           .upload(storagePath, blob, {
-            contentType: "image/webp",
+            contentType,
             cacheControl: "31536000",
             upsert: false,
           });
 
         if (uploadError) {
-          // If storage upload fails (e.g. offline/mock environment), create mock blob URL for instant preview
-          console.warn("Storage upload failed, using local preview fallback", uploadError);
+          throw new Error(`Storage upload failed: ${uploadError.message}`);
         }
+        uploaded = true;
 
         const {
           data: { publicUrl },
@@ -115,16 +122,43 @@ export function PhotoManager({ initialPhotos, currentHeroUrl }: PhotoManagerProp
         if (saveRes.success && saveRes.photo) {
           setPhotos((prev) => [...prev, saveRes.photo]);
           successCount++;
+        } else {
+          throw new Error(saveRes.error || "Failed to save photo details.");
         }
       } catch (err: unknown) {
-        console.error("Upload error:", err);
+        failureCount++;
+        let reason = err instanceof Error ? err.message : "Unexpected upload error.";
+        if (uploaded && storagePath) {
+          try {
+            const { error: cleanupError } = await supabase.storage
+              .from("hotel-assets")
+              .remove([storagePath]);
+            if (cleanupError) {
+              reason += ` Uploaded file cleanup failed: ${cleanupError.message}`;
+            }
+          } catch (cleanupErr: unknown) {
+            const cleanupMessage =
+              cleanupErr instanceof Error ? cleanupErr.message : "Unexpected cleanup error.";
+            reason += ` Uploaded file cleanup failed: ${cleanupMessage}`;
+          }
+        }
+        if (!firstFailure) {
+          firstFailure = `${file.name}: ${reason}`;
+        }
       }
     }
 
     setIsUploading(false);
     setUploadProgress(null);
 
-    if (successCount > 0) {
+    if (failureCount > 0) {
+      setToast({
+        type: "error",
+        text: successCount > 0
+          ? `Uploaded ${successCount} photo(s); ${failureCount} failed. ${firstFailure}`
+          : `${failureCount} photo(s) failed. ${firstFailure}`,
+      });
+    } else if (successCount > 0) {
       setToast({
         type: "success",
         text: `Successfully processed and uploaded ${successCount} photo(s)!`,
@@ -163,14 +197,51 @@ export function PhotoManager({ initialPhotos, currentHeroUrl }: PhotoManagerProp
     }
   };
 
-  const handleMove = (index: number, direction: "up" | "down") => {
+  const handleMove = async (index: number, direction: "up" | "down") => {
     const nextIdx = direction === "up" ? index - 1 : index + 1;
     if (nextIdx < 0 || nextIdx >= photos.length) return;
 
+    const previous = [...photos];
     const copy = [...photos];
     const [moved] = copy.splice(index, 1);
     copy.splice(nextIdx, 0, moved);
     setPhotos(copy);
+
+    const res = await reorderPhotosAction(copy.map((p) => p.id));
+    if (!res.success) {
+      setPhotos(previous);
+      setToast({ type: "error", text: res.error || "Failed to save photo order." });
+    } else {
+      router.refresh();
+      setToast({ type: "success", text: "Photo order updated!" });
+      setTimeout(() => setToast(null), 2500);
+    }
+  };
+
+  const handleSavePhotoDetails = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingPhoto) return;
+
+    setSavingEdit(true);
+    const formData = new FormData(e.currentTarget);
+    const res = await updatePhotoDetailsAction({
+      id: editingPhoto.id,
+      alt_text: String(formData.get("alt_text") || "").trim(),
+      caption: String(formData.get("caption") || "").trim(),
+      category: String(formData.get("category") || "General").trim(),
+    });
+    setSavingEdit(false);
+
+    if (res.success && res.photo) {
+      const updated = res.photo as Photo;
+      setPhotos((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      setEditingPhoto(null);
+      router.refresh();
+      setToast({ type: "success", text: "Photo details updated!" });
+      setTimeout(() => setToast(null), 3000);
+    } else {
+      setToast({ type: "error", text: res.error || "Failed to update photo details." });
+    }
   };
 
   return (
@@ -357,19 +428,113 @@ export function PhotoManager({ initialPhotos, currentHeroUrl }: PhotoManagerProp
                   </span>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() => handleDeletePhoto(photo.id)}
-                  className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors ml-auto"
-                  aria-label="Delete photo"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1 ml-auto">
+                  <button
+                    type="button"
+                    onClick={() => setEditingPhoto(photo)}
+                    className="p-1.5 text-slate-600 dark:text-stone-400 hover:bg-slate-200 dark:hover:bg-stone-800 rounded-lg transition-colors"
+                    aria-label="Edit photo alt text and caption"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeletePhoto(photo.id)}
+                    className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
+                    aria-label="Delete photo"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* Edit Photo Metadata Modal */}
+      {editingPhoto && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Edit Photo Details"
+          onClick={() => setEditingPhoto(null)}
+          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 overflow-y-auto"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-stone-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-200 dark:border-stone-800"
+          >
+            <h3 className="font-serif text-xl font-bold text-slate-900 dark:text-stone-100 mb-1">
+              Edit Photo Details
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-stone-400 mb-5">
+              Update descriptive alt text (SEO), caption, and category.
+            </p>
+
+            <form onSubmit={handleSavePhotoDetails} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-stone-300 mb-1">
+                  Alt Text (SEO Required) *
+                </label>
+                <input
+                  name="alt_text"
+                  type="text"
+                  required
+                  minLength={3}
+                  maxLength={200}
+                  defaultValue={editingPhoto.alt_text}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-slate-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-heritage-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-stone-300 mb-1">
+                  Caption
+                </label>
+                <input
+                  name="caption"
+                  type="text"
+                  maxLength={200}
+                  defaultValue={editingPhoto.caption || ""}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-slate-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-heritage-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-stone-300 mb-1">
+                  Category
+                </label>
+                <input
+                  name="category"
+                  type="text"
+                  required
+                  maxLength={50}
+                  defaultValue={editingPhoto.category || "General"}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-slate-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-heritage-600"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200 dark:border-stone-800">
+                <button
+                  type="button"
+                  onClick={() => setEditingPhoto(null)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-stone-700 text-slate-700 dark:text-stone-300 text-sm font-semibold hover:bg-slate-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEdit}
+                  className="px-6 py-2.5 rounded-xl bg-heritage-700 hover:bg-heritage-800 text-white text-sm font-semibold shadow-md transition-all disabled:opacity-50"
+                >
+                  {savingEdit ? "Saving..." : "Save Details"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

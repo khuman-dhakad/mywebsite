@@ -1,22 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Plus, Trash2, Edit3, CheckCircle2, AlertCircle, Ban, Bed, Users, Loader2 } from "lucide-react";
+import { Plus, Trash2, Edit3, CheckCircle2, AlertCircle, Bed, Users, ArrowUp, ArrowDown } from "lucide-react";
 import { Room } from "@/types/database";
 import { formatRupees } from "@/lib/utils";
-import { upsertRoomAction, deleteRoomAction, toggleRoomAvailabilityAction } from "@/app/admin/actions";
+import {
+  upsertRoomAction,
+  deleteRoomAction,
+  toggleRoomAvailabilityAction,
+  reorderRoomsAction,
+} from "@/app/admin/actions";
 
 interface RoomsManagerProps {
   initialRooms: Room[];
 }
 
 export function RoomsManager({ initialRooms }: RoomsManagerProps) {
+  const router = useRouter();
   const [rooms, setRooms] = useState<Room[]>(initialRooms);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    if (!isAddingNew && !editingRoom) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsAddingNew(false);
+        setEditingRoom(null);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isAddingNew, editingRoom]);
 
   const handleToggleAvailability = async (room: Room) => {
     const nextVal = !room.is_available;
@@ -27,8 +46,30 @@ export function RoomsManager({ initialRooms }: RoomsManagerProps) {
       setRooms((prev) => prev.map((r) => (r.id === room.id ? { ...r, is_available: !nextVal } : r)));
       setToast({ type: "error", text: res.error || "Failed to update availability" });
     } else {
+      router.refresh();
       setToast({ type: "success", text: `Room marked as ${nextVal ? "Available" : "Unavailable"}` });
       setTimeout(() => setToast(null), 3000);
+    }
+  };
+
+  const handleMoveRoom = async (index: number, direction: "up" | "down") => {
+    const nextIdx = direction === "up" ? index - 1 : index + 1;
+    if (nextIdx < 0 || nextIdx >= rooms.length) return;
+
+    const previous = [...rooms];
+    const copy = [...rooms];
+    const [moved] = copy.splice(index, 1);
+    copy.splice(nextIdx, 0, moved);
+    setRooms(copy);
+
+    const res = await reorderRoomsAction(copy.map((r) => r.id));
+    if (!res.success) {
+      setRooms(previous);
+      setToast({ type: "error", text: res.error || "Failed to save room order." });
+    } else {
+      router.refresh();
+      setToast({ type: "success", text: "Room order updated!" });
+      setTimeout(() => setToast(null), 2500);
     }
   };
 
@@ -41,6 +82,7 @@ export function RoomsManager({ initialRooms }: RoomsManagerProps) {
 
     if (res.success) {
       setRooms((prev) => prev.filter((r) => r.id !== roomId));
+      router.refresh();
       setToast({ type: "success", text: "Room deleted successfully." });
       setTimeout(() => setToast(null), 3000);
     } else {
@@ -57,12 +99,20 @@ export function RoomsManager({ initialRooms }: RoomsManagerProps) {
     setLoading(false);
 
     if (res.success) {
+      if (res.room) {
+        const savedRoom = res.room as Room;
+        setRooms((prev) => {
+          const exists = prev.some((r) => r.id === savedRoom.id);
+          return exists
+            ? prev.map((r) => (r.id === savedRoom.id ? savedRoom : r))
+            : [...prev, savedRoom];
+        });
+      }
       setToast({ type: "success", text: res.message || "Room saved!" });
       setTimeout(() => setToast(null), 3000);
       setIsAddingNew(false);
       setEditingRoom(null);
-      // Reload rooms
-      window.location.reload();
+      router.refresh();
     } else {
       setToast({ type: "error", text: res.error || "Failed to save room." });
     }
@@ -114,7 +164,7 @@ export function RoomsManager({ initialRooms }: RoomsManagerProps) {
 
       {/* Rooms List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {rooms.map((room) => (
+        {rooms.map((room, idx) => (
           <div
             key={room.id}
             className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 overflow-hidden shadow-sm flex flex-col justify-between"
@@ -127,6 +177,7 @@ export function RoomsManager({ initialRooms }: RoomsManagerProps) {
                     src={room.image_url}
                     alt={room.name}
                     fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className="object-cover"
                   />
                 ) : (
@@ -134,6 +185,26 @@ export function RoomsManager({ initialRooms }: RoomsManagerProps) {
                     No image uploaded
                   </div>
                 )}
+                <div className="absolute top-3 left-3 flex items-center gap-1 bg-black/60 rounded-lg p-0.5 opacity-90">
+                  <button
+                    type="button"
+                    disabled={idx === 0}
+                    onClick={() => handleMoveRoom(idx, "up")}
+                    className="p-1 text-white hover:bg-white/20 rounded disabled:opacity-30"
+                    aria-label="Move room up"
+                  >
+                    <ArrowUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={idx === rooms.length - 1}
+                    onClick={() => handleMoveRoom(idx, "down")}
+                    className="p-1 text-white hover:bg-white/20 rounded disabled:opacity-30"
+                    aria-label="Move room down"
+                  >
+                    <ArrowDown className="w-3.5 h-3.5" />
+                  </button>
+                </div>
                 <div className="absolute top-3 right-3">
                   <span
                     className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold text-white ${
@@ -215,8 +286,20 @@ export function RoomsManager({ initialRooms }: RoomsManagerProps) {
 
       {/* Add / Edit Room Modal */}
       {(isAddingNew || editingRoom) && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-stone-900 rounded-2xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-stone-200 dark:border-stone-800 my-8">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={editingRoom ? `Edit ${editingRoom.name}` : "Add New Room"}
+          onClick={() => {
+            setIsAddingNew(false);
+            setEditingRoom(null);
+          }}
+          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 overflow-y-auto"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-stone-900 rounded-2xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-stone-200 dark:border-stone-800 my-8"
+          >
             <h3 className="font-serif text-xl font-bold text-slate-900 dark:text-stone-100 mb-1">
               {editingRoom ? `Edit: ${editingRoom.name}` : "Add New Room"}
             </h3>
