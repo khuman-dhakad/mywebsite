@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { MessageCircle, Phone, Sparkles, MapPin, CheckCircle2 } from "lucide-react";
-import { buildWhatsAppUrl, buildTelUrl } from "@/lib/utils";
+import { buildWhatsAppUrl, buildTelUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/utils";
 import { HotelProfile } from "@/types/database";
 
 interface HeroProps {
@@ -96,6 +96,8 @@ export function Hero({ profile }: HeroProps) {
                 fill
                 priority
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
+                placeholder="blur"
+                blurDataURL={SHIMMER_BLUR_DATA_URL}
                 className="object-cover transition-transform duration-700 hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />

@@ -6,6 +6,7 @@ import {
   normalizePhoneNumber,
   sanitizeMapEmbedUrl,
   validateImageMagicBytes,
+  SHIMMER_BLUR_DATA_URL,
 } from "@/lib/utils";
 
 describe("Utility Functions & URL Builders", () => {
@@ -108,6 +109,12 @@ describe("Utility Functions & URL Builders", () => {
 
       const textBuffer = new TextEncoder().encode("<script>alert(1)</script>").buffer;
       expect(validateImageMagicBytes(textBuffer)).toEqual({ valid: false });
+    });
+  });
+
+  describe("SHIMMER_BLUR_DATA_URL", () => {
+    it("should expose a valid base64 inline SVG data URL for Next image blur placeholders", () => {
+      expect(SHIMMER_BLUR_DATA_URL.startsWith("data:image/svg+xml;base64,")).toBe(true);
     });
   });
 });

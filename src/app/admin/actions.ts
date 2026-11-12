@@ -4,7 +4,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { siteConfig } from "@/config/site.config";
-import { hotelProfileSchema, roomSchema, photoSchema } from "@/lib/validations/hotel";
+import {
+  hotelProfileSchema,
+  roomSchema,
+  photoSchema,
+  uuidSchema,
+  photoDetailsSchema,
+  reorderIdsSchema,
+} from "@/lib/validations/hotel";
 
 /**
  * Ensures authenticated user is a verified admin for this tenant's site_id
@@ -119,16 +126,26 @@ export async function upsertRoomAction(prevState: unknown, formData: FormData) {
       updated_at: new Date().toISOString(),
     };
 
+    let data;
     let error;
     if (roomId) {
+      const validId = uuidSchema.parse(roomId);
       const res = await supabase
         .from("rooms")
         .update(roomPayload)
-        .eq("id", roomId)
-        .eq("site_id", siteConfig.siteId);
+        .eq("id", validId)
+        .eq("site_id", siteConfig.siteId)
+        .select()
+        .single();
+      data = res.data;
       error = res.error;
     } else {
-      const res = await supabase.from("rooms").insert(roomPayload);
+      const res = await supabase
+        .from("rooms")
+        .insert(roomPayload)
+        .select()
+        .single();
+      data = res.data;
       error = res.error;
     }
 
@@ -137,7 +154,7 @@ export async function upsertRoomAction(prevState: unknown, formData: FormData) {
     }
 
     revalidatePath("/");
-    return { success: true, message: roomId ? "Room updated!" : "Room created!" };
+    return { success: true, message: roomId ? "Room updated!" : "Room created!", room: data };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to save room";
     return { success: false, error: message };
@@ -146,12 +163,13 @@ export async function upsertRoomAction(prevState: unknown, formData: FormData) {
 
 export async function deleteRoomAction(roomId: string) {
   try {
+    const validId = uuidSchema.parse(roomId);
     const { supabase } = await verifyAdminAuth();
 
     const { error } = await supabase
       .from("rooms")
       .delete()
-      .eq("id", roomId)
+      .eq("id", validId)
       .eq("site_id", siteConfig.siteId);
 
     if (error) return { success: false, error: error.message };
@@ -166,12 +184,13 @@ export async function deleteRoomAction(roomId: string) {
 
 export async function toggleRoomAvailabilityAction(roomId: string, isAvailable: boolean) {
   try {
+    const validId = uuidSchema.parse(roomId);
     const { supabase } = await verifyAdminAuth();
 
     const { error } = await supabase
       .from("rooms")
       .update({ is_available: isAvailable, updated_at: new Date().toISOString() })
-      .eq("id", roomId)
+      .eq("id", validId)
       .eq("site_id", siteConfig.siteId);
 
     if (error) return { success: false, error: error.message };
@@ -180,6 +199,31 @@ export async function toggleRoomAvailabilityAction(roomId: string, isAvailable: 
     return { success: true };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to update availability";
+    return { success: false, error: message };
+  }
+}
+
+export async function reorderRoomsAction(orderedIds: string[]) {
+  try {
+    const validIds = reorderIdsSchema.parse(orderedIds);
+    const { supabase } = await verifyAdminAuth();
+
+    const updates = validIds.map((id, idx) =>
+      supabase
+        .from("rooms")
+        .update({ sort_order: idx + 1, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .eq("site_id", siteConfig.siteId)
+    );
+
+    const results = await Promise.all(updates);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) return { success: false, error: failed.error.message };
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to reorder rooms";
     return { success: false, error: message };
   }
 }
@@ -225,14 +269,72 @@ export async function savePhotoAction(photoInput: {
   }
 }
 
+export async function updatePhotoDetailsAction(input: {
+  id: string;
+  alt_text: string;
+  caption?: string | null;
+  category?: string;
+}) {
+  try {
+    const validated = photoDetailsSchema.parse(input);
+    const { supabase } = await verifyAdminAuth();
+
+    const { data, error } = await supabase
+      .from("photos")
+      .update({
+        alt_text: validated.alt_text,
+        caption: validated.caption || "",
+        category: validated.category || "General",
+      })
+      .eq("id", validated.id)
+      .eq("site_id", siteConfig.siteId)
+      .select()
+      .single();
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath("/");
+    return { success: true, photo: data };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to update photo details";
+    return { success: false, error: message };
+  }
+}
+
+export async function reorderPhotosAction(orderedIds: string[]) {
+  try {
+    const validIds = reorderIdsSchema.parse(orderedIds);
+    const { supabase } = await verifyAdminAuth();
+
+    const updates = validIds.map((id, idx) =>
+      supabase
+        .from("photos")
+        .update({ sort_order: idx + 1 })
+        .eq("id", id)
+        .eq("site_id", siteConfig.siteId)
+    );
+
+    const results = await Promise.all(updates);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) return { success: false, error: failed.error.message };
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to reorder photos";
+    return { success: false, error: message };
+  }
+}
+
 export async function deletePhotoAction(photoId: string) {
   try {
+    const validId = uuidSchema.parse(photoId);
     const { supabase } = await verifyAdminAuth();
 
     const { error } = await supabase
       .from("photos")
       .delete()
-      .eq("id", photoId)
+      .eq("id", validId)
       .eq("site_id", siteConfig.siteId);
 
     if (error) return { success: false, error: error.message };

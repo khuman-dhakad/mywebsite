@@ -116,6 +116,8 @@ test.describe("Mobile Layout & Navbar Comprehensive Audit", () => {
           await page.keyboard.press("Escape");
           await expect(menuPanel).toBeHidden();
           await expect(hamburger).toHaveAttribute("aria-expanded", "false");
+          await expect(hamburger).toBeFocused();
+          expect(await page.evaluate(() => document.body.style.overflow)).toBe("");
           await expect(bottomBar).toBeVisible();
 
           // Re-open and close via Backdrop tap
@@ -161,6 +163,18 @@ test.describe("Mobile Layout & Navbar Comprehensive Audit", () => {
           // Bottom bar should be hidden
           const bottomBar = page.locator("[data-mobile-bottom-bar]");
           await expect(bottomBar).toBeHidden();
+
+          // Tablet hamburger drawer opens cleanly below full header height without overlap
+          const header = page.locator("header");
+          const headerBox = await header.boundingBox();
+          const hamburger = page.locator("header button[aria-label='Toggle Navigation Menu']");
+          await hamburger.click();
+          const menuPanel = page.locator("#mobile-nav-panel");
+          await expect(menuPanel).toBeVisible();
+          const panelBox = await menuPanel.boundingBox();
+          expect(panelBox!.y).toBeGreaterThanOrEqual(Math.floor(headerBox!.height) - 1);
+          await page.keyboard.press("Escape");
+          await expect(menuPanel).toBeHidden();
         }
 
         // 8. No unexpected console errors

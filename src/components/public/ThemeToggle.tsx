@@ -33,7 +33,7 @@ export function ThemeToggle() {
   };
 
   if (!mounted) {
-    return <div className="w-10 h-10" aria-hidden="true" />;
+    return <div className="w-11 h-11" aria-hidden="true" />;
   }
 
   return (

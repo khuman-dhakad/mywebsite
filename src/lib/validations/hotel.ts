@@ -67,7 +67,19 @@ export const loginSchema = z.object({
   totpCode: z.string().length(6, "2FA TOTP code must be 6 digits").optional().or(z.literal("")),
 });
 
+export const uuidSchema = z.string().uuid("Invalid identifier format");
+
+export const photoDetailsSchema = z.object({
+  id: uuidSchema,
+  alt_text: z.string().min(3, "Descriptive alt text is required for SEO and accessibility").max(200),
+  caption: z.string().max(200).optional().nullable(),
+  category: z.string().min(1).max(50).default("General"),
+});
+
+export const reorderIdsSchema = z.array(uuidSchema).min(1).max(200);
+
 export type HotelProfileInput = z.infer<typeof hotelProfileSchema>;
 export type RoomInput = z.infer<typeof roomSchema>;
 export type PhotoInput = z.infer<typeof photoSchema>;
+export type PhotoDetailsInput = z.infer<typeof photoDetailsSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

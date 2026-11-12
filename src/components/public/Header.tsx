@@ -16,8 +16,11 @@ export function Header({ profile }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const hamburgerBtnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const firstNavRef = useRef<HTMLAnchorElement>(null);
   const prevOpenRef = useRef(false);
+  const bodyOverflowRef = useRef("");
+  const focusTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,18 +30,29 @@ export function Header({ profile }: HeaderProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Handle body scroll locking, accessibility attributes, and focus restoration
+  // Handle body scroll locking, inert background landmark, accessibility attributes, and focus restoration
   useEffect(() => {
+    const mainEl = document.querySelector("main") as (HTMLElement & { inert: boolean }) | null;
+    const footerEl = document.querySelector("footer") as (HTMLElement & { inert: boolean }) | null;
+
     if (mobileMenuOpen) {
+      bodyOverflowRef.current = document.body.style.overflow;
       document.body.style.overflow = "hidden";
       document.body.setAttribute("data-mobile-menu-open", "true");
-      // Move focus into the first menu item
-      setTimeout(() => {
+      if (mainEl) mainEl.inert = true;
+      if (footerEl) footerEl.inert = true;
+      focusTimeoutRef.current = window.setTimeout(() => {
         firstNavRef.current?.focus();
       }, 50);
     } else {
-      document.body.style.overflow = "";
+      if (focusTimeoutRef.current !== null) {
+        window.clearTimeout(focusTimeoutRef.current);
+        focusTimeoutRef.current = null;
+      }
+      document.body.style.overflow = bodyOverflowRef.current;
       document.body.removeAttribute("data-mobile-menu-open");
+      if (mainEl) mainEl.inert = false;
+      if (footerEl) footerEl.inert = false;
       // Return focus to hamburger button on close if it was previously open
       if (prevOpenRef.current) {
         hamburgerBtnRef.current?.focus();
@@ -47,16 +61,46 @@ export function Header({ profile }: HeaderProps) {
     prevOpenRef.current = mobileMenuOpen;
 
     return () => {
-      document.body.style.overflow = "";
-      document.body.removeAttribute("data-mobile-menu-open");
+      if (focusTimeoutRef.current !== null) {
+        window.clearTimeout(focusTimeoutRef.current);
+        focusTimeoutRef.current = null;
+      }
+      if (mobileMenuOpen) {
+        document.body.style.overflow = bodyOverflowRef.current;
+        document.body.removeAttribute("data-mobile-menu-open");
+        if (mainEl) mainEl.inert = false;
+        if (footerEl) footerEl.inert = false;
+      }
     };
   }, [mobileMenuOpen]);
 
-  // Handle Escape key to close mobile menu
+  // Handle Escape key and Tab focus trap within open mobile navigation panel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (mobileMenuOpen && e.key === "Escape") {
+      if (!mobileMenuOpen) return;
+
+      if (e.key === "Escape") {
         setMobileMenuOpen(false);
+        return;
+      }
+
+      if (e.key === "Tab" && panelRef.current) {
+        const focusables = panelRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables.length === 0) return;
+
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement;
+
+        if (e.shiftKey && (active === first || !panelRef.current.contains(active))) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -164,8 +208,9 @@ export function Header({ profile }: HeaderProps) {
       {/* Dimmed Backdrop for Mobile Menu */}
       {mobileMenuOpen && (
         <div
+          data-testid="mobile-nav-backdrop"
           onClick={() => setMobileMenuOpen(false)}
-          className="lg:hidden fixed inset-0 top-[60px] bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-200 motion-reduce:transition-none"
+          className="lg:hidden absolute inset-x-0 top-[60px] md:top-full h-[100dvh] bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-200 motion-reduce:transition-none"
           aria-hidden="true"
         />
       )}
@@ -173,11 +218,12 @@ export function Header({ profile }: HeaderProps) {
       {/* Mobile Navigation Full-Width Panel */}
       {mobileMenuOpen && (
         <div
+          ref={panelRef}
           id="mobile-nav-panel"
           role="dialog"
           aria-modal="true"
           aria-label="Site Navigation"
-          className="lg:hidden fixed inset-x-0 top-[60px] h-[calc(100dvh-60px)] bg-white dark:bg-stone-900 border-b border-slate-200 dark:border-stone-800 z-50 flex flex-col justify-between shadow-2xl overflow-y-auto transition-all duration-200 motion-reduce:transition-none"
+          className="lg:hidden absolute inset-x-0 top-[60px] md:top-full max-h-[calc(100dvh-60px)] md:max-h-[calc(100dvh-76px)] bg-white dark:bg-stone-900 border-b border-slate-200 dark:border-stone-800 z-50 flex flex-col justify-between shadow-2xl overflow-y-auto overscroll-contain transition-all duration-200 motion-reduce:transition-none"
         >
           <nav className="flex flex-col py-2 divide-y divide-slate-100 dark:divide-stone-800" aria-label="Mobile Navigation">
             {navItems.map((item, index) => (
