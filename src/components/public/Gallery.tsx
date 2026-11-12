@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { Camera, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Photo } from "@/types/database";
+import { SHIMMER_BLUR_DATA_URL } from "@/lib/utils";
 
 interface GalleryProps {
   photos: Photo[];
@@ -13,6 +14,12 @@ interface GalleryProps {
 export function Gallery({ photos, hotelName }: GalleryProps) {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>("All");
+  const bodyOverflowRef = useRef("");
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  const touchStartXRef = useRef<number | null>(null);
+  const wasOpenRef = useRef(false);
 
   const categories = ["All", ...Array.from(new Set(photos.map((p) => p.category).filter(Boolean)))];
 
@@ -20,34 +27,78 @@ export function Gallery({ photos, hotelName }: GalleryProps) {
     activeCategory === "All" ? photos : photos.filter((p) => p.category === activeCategory);
 
   const openLightbox = (idx: number) => {
+    bodyOverflowRef.current = document.body.style.overflow;
+    triggerRef.current = document.activeElement instanceof HTMLButtonElement
+      ? document.activeElement
+      : null;
     setSelectedIdx(idx);
     document.body.style.overflow = "hidden";
   };
 
   const closeLightbox = useCallback(() => {
     setSelectedIdx(null);
-    document.body.style.overflow = "unset";
+    document.body.style.overflow = bodyOverflowRef.current;
+  }, []);
+
+  useEffect(() => {
+    if (selectedIdx !== null) {
+      wasOpenRef.current = true;
+      closeButtonRef.current?.focus();
+    } else if (wasOpenRef.current) {
+      wasOpenRef.current = false;
+      triggerRef.current?.focus();
+    }
+  }, [selectedIdx]);
+
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = bodyOverflowRef.current;
+    };
   }, []);
 
   const nextPhoto = useCallback(() => {
-    if (selectedIdx !== null) {
+    if (selectedIdx !== null && filteredPhotos.length > 0) {
       setSelectedIdx((prev) => (prev !== null && prev < filteredPhotos.length - 1 ? prev + 1 : 0));
     }
   }, [selectedIdx, filteredPhotos.length]);
 
   const prevPhoto = useCallback(() => {
-    if (selectedIdx !== null) {
+    if (selectedIdx !== null && filteredPhotos.length > 0) {
       setSelectedIdx((prev) => (prev !== null && prev > 0 ? prev - 1 : filteredPhotos.length - 1));
     }
   }, [selectedIdx, filteredPhotos.length]);
 
-  // Keyboard navigation for lightbox
+  // Keyboard navigation & focus trap for lightbox
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (selectedIdx === null) return;
-      if (e.key === "Escape") closeLightbox();
-      if (e.key === "ArrowRight") nextPhoto();
-      if (e.key === "ArrowLeft") prevPhoto();
+      if (e.key === "Escape") {
+        closeLightbox();
+        return;
+      }
+      if (e.key === "ArrowRight") {
+        nextPhoto();
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        prevPhoto();
+        return;
+      }
+      if (e.key === "Tab" && lightboxRef.current) {
+        const focusables = lightboxRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -73,14 +124,21 @@ export function Gallery({ photos, hotelName }: GalleryProps) {
 
         {/* Category Filters */}
         {categories.length > 2 && (
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-8" role="tablist">
+          <div
+            className="flex flex-wrap items-center justify-center gap-2 mb-8"
+            role="tablist"
+            aria-label="Filter photos by category"
+          >
             {categories.map((cat) => (
               <button
                 key={cat}
-                onClick={() => setActiveCategory(cat)}
+                onClick={() => {
+                  setActiveCategory(cat);
+                  setSelectedIdx(null);
+                }}
                 role="tab"
                 aria-selected={activeCategory === cat}
-                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-colors min-h-[40px] focus:outline-none focus:ring-2 focus:ring-heritage-600 ${
+                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-heritage-600 ${
                   activeCategory === cat
                     ? "bg-heritage-700 text-white"
                     : "bg-stone-100 dark:bg-stone-800 text-slate-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700"
@@ -112,6 +170,8 @@ export function Gallery({ photos, hotelName }: GalleryProps) {
                   alt={photo.alt_text}
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  placeholder="blur"
+                  blurDataURL={SHIMMER_BLUR_DATA_URL}
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
@@ -132,15 +192,35 @@ export function Gallery({ photos, hotelName }: GalleryProps) {
       {/* Accessible Lightbox Modal */}
       {selectedIdx !== null && filteredPhotos[selectedIdx] && (
         <div
+          ref={lightboxRef}
           role="dialog"
           aria-modal="true"
           aria-label="Image Lightbox"
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 sm:p-6"
+          onClick={closeLightbox}
+          onTouchStart={(e) => {
+            touchStartXRef.current = e.touches[0]?.clientX ?? null;
+          }}
+          onTouchEnd={(e) => {
+            if (touchStartXRef.current === null) return;
+            const endX = e.changedTouches[0]?.clientX;
+            if (typeof endX === "number") {
+              const delta = endX - touchStartXRef.current;
+              if (delta > 50) prevPhoto();
+              else if (delta < -50) nextPhoto();
+            }
+            touchStartXRef.current = null;
+          }}
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 sm:p-6 overscroll-contain"
         >
           {/* Close button */}
           <button
-            onClick={closeLightbox}
-            className="absolute top-4 right-4 z-50 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors"
+            ref={closeButtonRef}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              closeLightbox();
+            }}
+            className="absolute top-4 right-4 z-50 w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors"
             aria-label="Close Lightbox (Escape)"
           >
             <X className="w-6 h-6" />
@@ -148,20 +228,30 @@ export function Gallery({ photos, hotelName }: GalleryProps) {
 
           {/* Previous button */}
           <button
-            onClick={prevPhoto}
-            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              prevPhoto();
+            }}
+            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors"
             aria-label="Previous Photo (Left Arrow)"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
 
           {/* Image & Caption */}
-          <div className="relative max-w-5xl max-h-[85vh] w-full flex flex-col items-center">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-5xl max-h-[85vh] w-full flex flex-col items-center"
+          >
             <div className="relative w-full h-[65vh] sm:h-[75vh]">
               <Image
                 src={filteredPhotos[selectedIdx].url}
                 alt={filteredPhotos[selectedIdx].alt_text}
                 fill
+                sizes="(max-width: 768px) 100vw, 90vw"
+                placeholder="blur"
+                blurDataURL={SHIMMER_BLUR_DATA_URL}
                 className="object-contain"
                 priority
               />
@@ -178,8 +268,12 @@ export function Gallery({ photos, hotelName }: GalleryProps) {
 
           {/* Next button */}
           <button
-            onClick={nextPhoto}
-            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              nextPhoto();
+            }}
+            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors"
             aria-label="Next Photo (Right Arrow)"
           >
             <ChevronRight className="w-6 h-6" />
