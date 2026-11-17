@@ -23,6 +23,11 @@ const config: Config = {
           900: "#78350f",
           950: "#451a03",
         },
+        gold: {
+          DEFAULT: "#D4AF37",
+          light: "#F3E5AB",
+          dark: "#AA771C",
+        },
         whatsapp: {
           DEFAULT: "#25D366",
           dark: "#128C7E",
