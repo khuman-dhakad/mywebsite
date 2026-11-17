@@ -91,3 +91,26 @@ export interface FAQ {
   sort_order: number;
   created_at: string;
 }
+
+export interface GuestReview {
+  id: string;
+  author: string;
+  location: string;
+  rating: number;
+  date: string;
+  category: "Family" | "Couple" | "Solo" | "Business";
+  title: string;
+  comment: string;
+  verified: boolean;
+}
+
+export interface LocalAttraction {
+  id: string;
+  name: string;
+  distance: string;
+  walkTime?: string;
+  driveTime?: string;
+  description: string;
+  category: "Monument" | "Shopping" | "Culture" | "Dining";
+  directionsQuery: string;
+}

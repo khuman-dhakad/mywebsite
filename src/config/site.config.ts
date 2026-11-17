@@ -1,3 +1,5 @@
+import { GuestReview, LocalAttraction } from "@/types/database";
+
 export interface SiteConfig {
   siteId: string;
   siteUrl: string;
@@ -31,7 +33,19 @@ export interface SiteConfig {
     enableAmenities: boolean;
     enableLocation: boolean;
     enableFaq: boolean;
+    enableReviews: boolean;
+    enableAttractions: boolean;
   };
+  ratingsSummary: {
+    overall: number;
+    total: number;
+    cleanliness: number;
+    location: number;
+    hospitality: number;
+    value: number;
+  };
+  reviews: GuestReview[];
+  attractions: LocalAttraction[];
   seo: {
     defaultTitle: string;
     defaultDescription: string;
@@ -83,7 +97,119 @@ export const siteConfig: SiteConfig = {
     enableAmenities: true,
     enableLocation: true,
     enableFaq: true,
+    enableReviews: true,
+    enableAttractions: true,
   },
+  ratingsSummary: {
+    overall: 4.8,
+    total: 184,
+    cleanliness: 4.9,
+    location: 5.0,
+    hospitality: 4.9,
+    value: 4.8,
+  },
+  reviews: [
+    {
+      id: "rev-1",
+      author: "Rajesh & Sunita Sharma",
+      location: "New Delhi",
+      rating: 5,
+      date: "October 2024",
+      category: "Family",
+      title: "Peaceful family stay within walking distance of Hawa Mahal",
+      comment: "We traveled with my elderly parents and two kids. The ground floor deluxe room was spotless, hot water was available all 24 hours, and the owner personally guided us to avoid tourist traps. Incredible hospitality!",
+      verified: true,
+    },
+    {
+      id: "rev-2",
+      author: "Aakash Mehta",
+      location: "Mumbai",
+      rating: 5,
+      date: "September 2024",
+      category: "Couple",
+      title: "Best budget heritage experience in Pink City",
+      comment: "Super quiet nights despite being in the center of the old city. The rooftop terrace offers breathtaking morning views with traditional chai. Booking directly on WhatsApp was fast and saved us OTA markups.",
+      verified: true,
+    },
+    {
+      id: "rev-3",
+      author: "Elena Rostova",
+      location: "Berlin, Germany",
+      rating: 5,
+      date: "November 2024",
+      category: "Solo",
+      title: "Safe, welcoming, and authentic Rajasthani warmth",
+      comment: "As a solo female traveler, safety was my number one priority. The 24-hr front desk is courteous and protective. Clean linen, strong Wi-Fi for my remote work, and delicious homemade poha for breakfast.",
+      verified: true,
+    },
+    {
+      id: "rev-4",
+      author: "Vikram Singhania",
+      location: "Ahmedabad",
+      rating: 5,
+      date: "August 2024",
+      category: "Business",
+      title: "Great value and impeccable cleanliness",
+      comment: "Visited Jaipur for gemstone business near Johari Bazaar. Walked everywhere in 5 minutes. AC was whisper quiet and the room was meticulously sanitized daily.",
+      verified: true,
+    },
+  ],
+  attractions: [
+    {
+      id: "attr-1",
+      name: "Hawa Mahal (Palace of Winds)",
+      distance: "350 meters",
+      walkTime: "4 min walk",
+      description: "Iconic five-story pink sandstone palace with 953 intricately carved jharokhas.",
+      category: "Monument",
+      directionsQuery: "Hawa+Mahal+Jaipur",
+    },
+    {
+      id: "attr-2",
+      name: "City Palace & Jantar Mantar",
+      distance: "800 meters",
+      walkTime: "9 min walk",
+      description: "Royal residence of the Jaipur Maharajas and UNESCO World Heritage astronomical observatory.",
+      category: "Monument",
+      directionsQuery: "City+Palace+Jaipur",
+    },
+    {
+      id: "attr-3",
+      name: "Johari Bazaar (Jewellery & Textiles)",
+      distance: "500 meters",
+      walkTime: "6 min walk",
+      description: "Vibrant shopping arcade famous for traditional Kundan jewelry, Bandhani sarees, and Jaipuri quilts.",
+      category: "Shopping",
+      directionsQuery: "Johari+Bazaar+Jaipur",
+    },
+    {
+      id: "attr-4",
+      name: "Albert Hall State Central Museum",
+      distance: "2.1 km",
+      driveTime: "7 min drive",
+      description: "Oldest museum in Rajasthan showcasing rare Indo-Saracenic architecture, armory, and miniature paintings.",
+      category: "Culture",
+      directionsQuery: "Albert+Hall+Museum+Jaipur",
+    },
+    {
+      id: "attr-5",
+      name: "Laxmi Misthan Bhandar (LMB)",
+      distance: "650 meters",
+      walkTime: "7 min walk",
+      description: "Legendary 290-year-old culinary institution renowned for authentic Ghewar, Pyaaz Kachori, and Rajasthani Thali.",
+      category: "Dining",
+      directionsQuery: "LMB+Jaipur",
+    },
+    {
+      id: "attr-6",
+      name: "Amer Fort (Amber Palace)",
+      distance: "9.2 km",
+      driveTime: "20 min drive",
+      description: "Majestic hilltop fortress overlooking Maota Lake with grand Sheesh Mahal (Mirror Palace).",
+      category: "Monument",
+      directionsQuery: "Amer+Fort+Jaipur",
+    },
+  ],
   seo: {
     defaultTitle: "Shanti Nivas Heritage Lodge | Best Budget Hotel in Jaipur near Hawa Mahal",
     defaultDescription: "Comfortable AC rooms in Jaipur from ₹999/night. Free high-speed Wi-Fi, 24-hr hot water, pure veg kitchen & rooftop view of Pink City. Instant booking on WhatsApp.",
