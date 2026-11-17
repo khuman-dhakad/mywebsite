@@ -23,12 +23,18 @@ export function Hero({ profile }: HeroProps) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
           {/* Text Content */}
           <div className="lg:col-span-7 flex flex-col justify-center">
-            {/* Top Local Tag */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-heritage-100 dark:bg-heritage-950/80 border border-heritage-200 dark:border-heritage-800 text-heritage-800 dark:text-heritage-300 text-xs sm:text-sm font-semibold mb-4 w-fit">
-              <MapPin className="w-4 h-4 text-heritage-600" />
-              <span>
-                {profile.city}, {profile.state} &bull; Best Direct Rate Guaranteed
-              </span>
+            {/* Top Local Tag & Season Pill */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-heritage-100 dark:bg-heritage-950/80 border border-heritage-200 dark:border-heritage-800 text-heritage-800 dark:text-heritage-300 text-xs sm:text-sm font-semibold w-fit">
+                <MapPin className="w-4 h-4 text-heritage-600" />
+                <span>
+                  {profile.city}, {profile.state} &bull; Best Direct Rate Guaranteed
+                </span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-xs font-semibold">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                <span>Pink City Season: Pleasant 24&deg;C Nights</span>
+              </div>
             </div>
 
             {/* Exactly One H1 for SEO (34px on mobile, 36px-60px on desktop) */}

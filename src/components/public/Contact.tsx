@@ -1,4 +1,7 @@
-import { Phone, MessageCircle, Mail, MapPin, Clock, CalendarCheck } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Phone, MessageCircle, Mail, MapPin, Clock, Copy, Check, ShieldCheck, Sparkles } from "lucide-react";
 import { HotelProfile } from "@/types/database";
 import { buildWhatsAppUrl, buildTelUrl } from "@/lib/utils";
 
@@ -7,11 +10,24 @@ interface ContactProps {
 }
 
 export function Contact({ profile }: ContactProps) {
+  const [copied, setCopied] = useState(false);
+
   const whatsappUrl = buildWhatsAppUrl(
     profile.whatsapp_number,
     profile.whatsapp_prefill || `Hello, I would like to make an inquiry at ${profile.name}.`
   );
   const telUrl = buildTelUrl(profile.phone);
+
+  const handleCopyAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(profile.address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // Fallback
+      setCopied(false);
+    }
+  };
 
   return (
     <section id="contact" className="scroll-mt-[68px] md:scroll-mt-0 py-12 sm:py-20 bg-stone-50 dark:bg-stone-950 border-b border-stone-200 dark:border-stone-800">
@@ -27,6 +43,15 @@ export function Contact({ profile }: ContactProps) {
           <p className="text-slate-600 dark:text-stone-300 text-base">
             Reach out directly for instant booking confirmations, special group discounts, or route queries.
           </p>
+
+          {/* Live Reception Indicator */}
+          <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-semibold">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>Front Desk Active &bull; Typical WhatsApp response in under 5 minutes</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -117,6 +142,41 @@ export function Contact({ profile }: ContactProps) {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Copy Address Bar */}
+        <div className="mt-8 p-4 sm:p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3 text-left">
+            <div className="w-9 h-9 rounded-xl bg-heritage-100 dark:bg-heritage-950 text-heritage-700 dark:text-heritage-400 flex items-center justify-center shrink-0">
+              <MapPin className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-stone-400">
+                Postal Address for Taxi / Auto-Rickshaw
+              </div>
+              <div className="text-sm font-medium text-slate-800 dark:text-stone-200 leading-snug">
+                {profile.address}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleCopyAddress}
+            className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-xs font-semibold text-slate-800 dark:text-stone-200 transition-colors"
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4 text-emerald-600" />
+                <span className="text-emerald-600 dark:text-emerald-400">Copied to Clipboard!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4 text-slate-500" />
+                <span>Copy Full Address</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </section>
