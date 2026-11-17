@@ -5,6 +5,7 @@ import { Rooms } from "@/components/public/Rooms";
 import { Gallery } from "@/components/public/Gallery";
 import { Amenities } from "@/components/public/Amenities";
 import { Reviews } from "@/components/public/Reviews";
+import { Attractions } from "@/components/public/Attractions";
 import { Location } from "@/components/public/Location";
 import { Contact } from "@/components/public/Contact";
 import { Faq } from "@/components/public/Faq";
@@ -59,6 +60,13 @@ export default async function HomePage() {
             reviews={siteConfig.reviews}
             ratingsSummary={siteConfig.ratingsSummary}
             hotelName={profile.name}
+          />
+        )}
+        {siteConfig.features.enableAttractions && siteConfig.attractions.length > 0 && (
+          <Attractions
+            attractions={siteConfig.attractions}
+            hotelName={profile.name}
+            city={profile.city}
           />
         )}
         {siteConfig.features.enableLocation && <Location profile={profile} />}
