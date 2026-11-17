@@ -37,11 +37,62 @@ test.describe("Visitor Experience & Mobile Flow", () => {
     await expect(priceTags.first()).toBeVisible();
 
     // Specific room booking button
-    const roomBookBtn = roomsSection.locator("a:has-text('Book This Room on WhatsApp')").first();
+    const roomBookBtn = roomsSection.locator("a:has-text('Quick Book on WhatsApp')").first();
     await expect(roomBookBtn).toBeVisible();
     const roomHref = await roomBookBtn.getAttribute("href");
     expect(roomHref).toContain("wa.me");
     expect(roomHref).toContain(encodeURIComponent("Deluxe Heritage AC Room"));
+  });
+
+  test("should open direct reservation modal and calculate estimated tariff", async ({ page }) => {
+    const roomsSection = page.locator("#rooms");
+    const reserveBtn = roomsSection.locator("button:has-text('Reserve / Check Dates')").first();
+    await expect(reserveBtn).toBeVisible();
+    await reserveBtn.click();
+
+    const modal = page.locator("dialog[aria-labelledby='booking-modal-title']");
+    await expect(modal).toBeVisible();
+    await expect(modal.locator("h2#booking-modal-title")).toContainText("Check Dates & Tariffs");
+
+    // Check tariff breakdown card is visible
+    await expect(modal.locator("text=Estimated Total Tariff")).toBeVisible();
+
+    // Close on close button
+    const closeBtn = modal.locator("button[aria-label='Close booking inquiry dialog']");
+    await closeBtn.click();
+    await expect(modal).not.toBeVisible();
+  });
+
+  test("should filter rooms by room type category", async ({ page }) => {
+    const roomsSection = page.locator("#rooms");
+    const familyTab = roomsSection.getByRole("tab", { name: "Family Suites" });
+    await familyTab.click();
+    await expect(familyTab).toHaveAttribute("aria-selected", "true");
+    await expect(roomsSection.locator("h3:has-text('Royal Family Jharokha Suite')")).toBeVisible();
+  });
+
+  test("should render guest reviews showcase and allow category filtering", async ({ page }) => {
+    const reviewsSection = page.locator("#reviews");
+    await expect(reviewsSection).toBeVisible();
+    await expect(reviewsSection.locator("text=Verified Google & Guest Rating")).toBeVisible();
+
+    const familyTab = reviewsSection.getByRole("tab", { name: "Family Travelers" });
+    await familyTab.click();
+    await expect(familyTab).toHaveAttribute("aria-selected", "true");
+    await expect(reviewsSection.locator("text=Rajesh & Sunita Sharma")).toBeVisible();
+  });
+
+  test("should render heritage attractions concierge guide", async ({ page }) => {
+    const attractionsSection = page.locator("#attractions");
+    await expect(attractionsSection).toBeVisible();
+    await expect(attractionsSection.locator("h3:has-text('Hawa Mahal')")).toBeVisible();
+  });
+
+  test("should allow copying property address", async ({ page }) => {
+    const contactSection = page.locator("#contact");
+    await expect(contactSection).toBeVisible();
+    const copyBtn = contactSection.locator("button:has-text('Copy Full Address')");
+    await expect(copyBtn).toBeVisible();
   });
 
   test("should open accessible lightbox on gallery photo click and close on Escape", async ({ page }) => {

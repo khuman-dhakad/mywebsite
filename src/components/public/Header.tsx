@@ -118,6 +118,7 @@ export function Header({ profile }: HeaderProps) {
     { label: "Rooms & Rates", href: "#rooms" },
     { label: "Gallery", href: "#gallery" },
     { label: "Amenities", href: "#amenities" },
+    { label: "Reviews", href: "#reviews" },
     { label: "Location", href: "#location" },
     { label: "Contact", href: "#contact" },
   ];
