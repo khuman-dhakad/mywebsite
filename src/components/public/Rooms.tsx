@@ -5,6 +5,7 @@ import Image from "next/image";
 import { MessageCircle, Users, Bed, Check, Ban, Sparkles, Coffee, ShieldCheck, Clock, ArrowUpDown } from "lucide-react";
 import { Room, HotelProfile } from "@/types/database";
 import { formatRupees, buildWhatsAppUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/utils";
+import { BookingModal } from "@/components/public/BookingModal";
 
 interface RoomsProps {
   rooms: Room[];
@@ -15,6 +16,16 @@ interface RoomsProps {
 export function Rooms({ rooms, profile, onSelectRoomForInquiry }: RoomsProps) {
   const [filterType, setFilterType] = useState<string>("All");
   const [sortBy, setSortBy] = useState<string>("recommended");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalRoom, setModalRoom] = useState<Room | null>(null);
+
+  const handleOpenModal = (room: Room) => {
+    setModalRoom(room);
+    setIsModalOpen(true);
+    if (onSelectRoomForInquiry) {
+      onSelectRoomForInquiry(room);
+    }
+  };
 
   const filterTabs = [
     { label: "All Rooms", value: "All" },
@@ -275,16 +286,14 @@ export function Rooms({ rooms, profile, onSelectRoomForInquiry }: RoomsProps) {
                     <div className="pt-2 space-y-2">
                       {room.is_available ? (
                         <>
-                          {onSelectRoomForInquiry && (
-                            <button
-                              type="button"
-                              onClick={() => onSelectRoomForInquiry(room)}
-                              className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-heritage-700 hover:bg-heritage-800 text-white font-semibold text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-heritage-600 min-h-[44px]"
-                            >
-                              <Sparkles className="w-4 h-4 text-amber-300" />
-                              <span>Reserve / Check Dates</span>
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenModal(room)}
+                            className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-heritage-700 hover:bg-heritage-800 text-white font-semibold text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-heritage-600 min-h-[44px]"
+                          >
+                            <Sparkles className="w-4 h-4 text-amber-300" />
+                            <span>Reserve / Check Dates</span>
+                          </button>
 
                           <a
                             href={bookWhatsAppUrl}
@@ -312,6 +321,15 @@ export function Rooms({ rooms, profile, onSelectRoomForInquiry }: RoomsProps) {
           </div>
         )}
       </div>
+
+      {/* Luxury Interactive Reservation Modal */}
+      <BookingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        selectedRoom={modalRoom}
+        rooms={rooms}
+        profile={profile}
+      />
     </section>
   );
 }
