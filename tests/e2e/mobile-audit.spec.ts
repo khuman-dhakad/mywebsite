@@ -102,7 +102,7 @@ test.describe("Mobile Layout & Navbar Comprehensive Audit", () => {
           // Large links with min 48px tap height
           const navLinks = menuPanel.locator("nav a");
           const count = await navLinks.count();
-          expect(count).toBe(6);
+          expect(count).toBe(7);
           for (let i = 0; i < count; i++) {
             const linkBox = await navLinks.nth(i).boundingBox();
             expect(linkBox!.height).toBeGreaterThanOrEqual(48);
