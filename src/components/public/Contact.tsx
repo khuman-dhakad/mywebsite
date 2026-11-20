@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, MessageCircle, Mail, MapPin, Clock, Copy, Check, ShieldCheck, Sparkles, Contact2 } from "lucide-react";
+import { Phone, MessageCircle, Mail, MapPin, Clock, Copy, Check, ShieldCheck, Sparkles, Contact2, Navigation } from "lucide-react";
 import { HotelProfile } from "@/types/database";
 import { buildWhatsAppUrl, buildTelUrl } from "@/lib/utils";
 import { downloadVCard } from "@/lib/vcard";
@@ -142,6 +142,48 @@ export function Contact({ profile }: ContactProps) {
                 <span className="truncate">{profile.email}</span>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Fair Transit Guide */}
+        <div className="mt-8 p-5 sm:p-6 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-heritage-100 dark:bg-heritage-950 text-heritage-700 dark:text-heritage-400 flex items-center justify-center shrink-0">
+                <Navigation className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="font-serif text-base font-bold text-slate-900 dark:text-stone-100">
+                  Fair Arrival Fare Guide (Avoid Tourist Touts)
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-stone-400">
+                  Typical government pre-paid / meter rates to reach {profile.name}
+                </p>
+              </div>
+            </div>
+            <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-full">
+              Verified Rates
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <div className="p-3.5 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800 text-xs">
+              <div className="font-bold text-slate-800 dark:text-stone-200">Jaipur Junction (4.8 km)</div>
+              <div className="text-slate-500 dark:text-stone-400 mt-0.5">Pre-paid Auto: ~₹100–₹130 (15 min)</div>
+              <div className="text-emerald-600 dark:text-emerald-400 font-medium mt-1">E-Rickshaw: ~₹80</div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800 text-xs">
+              <div className="font-bold text-slate-800 dark:text-stone-200">Jaipur Airport (12 km)</div>
+              <div className="text-slate-500 dark:text-stone-400 mt-0.5">Pre-paid Cab / Uber: ~₹380–₹450</div>
+              <div className="text-emerald-600 dark:text-emerald-400 font-medium mt-1">Direct via JLN Marg (25 min)</div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800 text-xs">
+              <div className="font-bold text-slate-800 dark:text-stone-200">Sindhi Camp Bus Stand (3.5 km)</div>
+              <div className="text-slate-500 dark:text-stone-400 mt-0.5">Auto-rickshaw: ~₹80–₹110</div>
+              <div className="text-emerald-600 dark:text-emerald-400 font-medium mt-1">Direct via Ajmer Gate (12 min)</div>
+            </div>
           </div>
         </div>
 
