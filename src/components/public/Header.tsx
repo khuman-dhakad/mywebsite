@@ -14,6 +14,7 @@ interface HeaderProps {
 export function Header({ profile }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("");
 
   const hamburgerBtnRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -23,10 +24,23 @@ export function Header({ profile }: HeaderProps) {
   const focusTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
+    const sectionIds = ["about", "rooms", "gallery", "amenities", "reviews", "attractions", "location", "contact"];
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
+
+      const scrollPosition = window.scrollY + 140;
+      for (let i = sectionIds.length - 1; i >= 0; i--) {
+        const el = document.getElementById(sectionIds[i]);
+        if (el && el.offsetTop <= scrollPosition) {
+          setActiveSection(sectionIds[i]);
+          return;
+        }
+      }
+      setActiveSection("");
     };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -154,15 +168,24 @@ export function Header({ profile }: HeaderProps) {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-1" aria-label="Main Navigation">
-            {navItems.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                className="px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-stone-200 hover:text-heritage-700 dark:hover:text-heritage-400 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-heritage-600"
-              >
-                {item.label}
-              </a>
-            ))}
+            {navItems.map((item) => {
+              const sectionId = item.href.replace("#", "");
+              const isActive = activeSection === sectionId;
+
+              return (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  className={`px-3.5 py-2 text-sm rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-heritage-600 ${
+                    isActive
+                      ? "text-heritage-700 dark:text-heritage-400 font-semibold bg-heritage-50/80 dark:bg-heritage-950/60"
+                      : "text-slate-700 dark:text-stone-200 hover:text-heritage-700 dark:hover:text-heritage-400 font-medium"
+                  }`}
+                >
+                  {item.label}
+                </a>
+              );
+            })}
           </nav>
 
           {/* Action CTAs & Controls */}
@@ -227,18 +250,27 @@ export function Header({ profile }: HeaderProps) {
           className="lg:hidden absolute inset-x-0 top-[60px] md:top-full max-h-[calc(100dvh-60px)] md:max-h-[calc(100dvh-76px)] bg-white dark:bg-stone-900 border-b border-slate-200 dark:border-stone-800 z-50 flex flex-col justify-between shadow-2xl overflow-y-auto overscroll-contain transition-all duration-200 motion-reduce:transition-none"
         >
           <nav className="flex flex-col py-2 divide-y divide-slate-100 dark:divide-stone-800" aria-label="Mobile Navigation">
-            {navItems.map((item, index) => (
-              <a
-                key={item.label}
-                ref={index === 0 ? firstNavRef : undefined}
-                href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-5 py-4 min-h-[48px] text-base font-semibold text-slate-800 dark:text-stone-100 hover:bg-stone-50 dark:hover:bg-stone-800/80 hover:text-heritage-700 dark:hover:text-heritage-400 transition-colors flex items-center justify-between"
-              >
-                <span>{item.label}</span>
-                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-stone-500" />
-              </a>
-            ))}
+            {navItems.map((item, index) => {
+              const sectionId = item.href.replace("#", "");
+              const isActive = activeSection === sectionId;
+
+              return (
+                <a
+                  key={item.label}
+                  ref={index === 0 ? firstNavRef : undefined}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`px-5 py-4 min-h-[48px] text-base font-semibold transition-colors flex items-center justify-between ${
+                    isActive
+                      ? "bg-heritage-50/80 dark:bg-heritage-950/40 text-heritage-700 dark:text-heritage-400"
+                      : "text-slate-800 dark:text-stone-100 hover:bg-stone-50 dark:hover:bg-stone-800/80 hover:text-heritage-700 dark:hover:text-heritage-400"
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  <ChevronRight className={`w-4 h-4 ${isActive ? "text-heritage-600" : "text-slate-400 dark:text-stone-500"}`} />
+                </a>
+              );
+            })}
           </nav>
 
           {/* Compact Contact Row at Panel Bottom */}
