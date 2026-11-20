@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, MessageCircle, Mail, MapPin, Clock, Copy, Check, ShieldCheck, Sparkles } from "lucide-react";
+import { Phone, MessageCircle, Mail, MapPin, Clock, Copy, Check, ShieldCheck, Sparkles, Contact2 } from "lucide-react";
 import { HotelProfile } from "@/types/database";
 import { buildWhatsAppUrl, buildTelUrl } from "@/lib/utils";
+import { downloadVCard } from "@/lib/vcard";
 
 interface ContactProps {
   profile: HotelProfile;
@@ -160,23 +161,34 @@ export function Contact({ profile }: ContactProps) {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleCopyAddress}
-            className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-xs font-semibold text-slate-800 dark:text-stone-200 transition-colors"
-          >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4 text-emerald-600" />
-                <span className="text-emerald-600 dark:text-emerald-400">Copied to Clipboard!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4 text-slate-500" />
-                <span>Copy Full Address</span>
-              </>
-            )}
-          </button>
+          <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => downloadVCard(profile)}
+              className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-heritage-700 hover:bg-heritage-800 text-white text-xs font-semibold transition-colors shadow-sm min-h-[40px]"
+            >
+              <Contact2 className="w-4 h-4 text-amber-200" />
+              <span>Save Hotel to Phone (vCard)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopyAddress}
+              className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-xs font-semibold text-slate-800 dark:text-stone-200 transition-colors min-h-[40px]"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  <span className="text-emerald-600 dark:text-emerald-400">Copied to Clipboard!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4 text-slate-500" />
+                  <span>Copy Full Address</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </section>
