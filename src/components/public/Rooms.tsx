@@ -2,10 +2,39 @@
 
 import { useState, useMemo } from "react";
 import Image from "next/image";
-import { MessageCircle, Users, Bed, Check, Ban, Sparkles, Coffee, ShieldCheck, Clock, ArrowUpDown } from "lucide-react";
+import {
+  MessageCircle,
+  Users,
+  Bed,
+  Check,
+  Ban,
+  Sparkles,
+  Coffee,
+  ShieldCheck,
+  Clock,
+  ArrowUpDown,
+  Wifi,
+  Snowflake,
+  Tv,
+  Droplets,
+  Wind,
+  Eye,
+} from "lucide-react";
 import { Room, HotelProfile } from "@/types/database";
 import { formatRupees, buildWhatsAppUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/utils";
 import { BookingModal } from "@/components/public/BookingModal";
+
+function getAmenityIcon(name: string) {
+  const lower = name.toLowerCase();
+  if (lower.includes("wi-fi") || lower.includes("wifi")) return Wifi;
+  if (lower.includes("air") || lower.includes("ac")) return Snowflake;
+  if (lower.includes("tv") || lower.includes("television")) return Tv;
+  if (lower.includes("water") || lower.includes("geyser") || lower.includes("shower")) return Droplets;
+  if (lower.includes("kettle") || lower.includes("tea") || lower.includes("coffee")) return Coffee;
+  if (lower.includes("fan")) return Wind;
+  if (lower.includes("view") || lower.includes("balcony")) return Eye;
+  return Sparkles;
+}
 
 interface RoomsProps {
   rooms: Room[];
@@ -238,12 +267,18 @@ export function Rooms({ rooms, profile, onSelectRoomForInquiry }: RoomsProps) {
                       </div>
 
                       <div className="mb-4">
-                        <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-stone-50">
-                          {formatRupees(room.price_per_night)}
-                        </span>
-                        <span className="text-xs text-slate-500 dark:text-stone-400 ml-1.5 font-medium">
-                          / night + taxes
-                        </span>
+                        <div className="flex items-baseline">
+                          <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-stone-50">
+                            {formatRupees(room.price_per_night)}
+                          </span>
+                          <span className="text-xs text-slate-500 dark:text-stone-400 ml-1.5 font-medium">
+                            / night + taxes
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-1 flex items-center gap-1">
+                          <Check className="w-3.5 h-3.5 shrink-0" />
+                          <span>Direct booking price &bull; Zero commission</span>
+                        </div>
                       </div>
 
                       <p className="text-sm text-slate-600 dark:text-stone-300 line-clamp-3 mb-5 leading-relaxed">
@@ -262,17 +297,21 @@ export function Rooms({ rooms, profile, onSelectRoomForInquiry }: RoomsProps) {
                         </div>
                       </div>
 
-                      {/* Amenities Pills */}
+                      {/* Amenities Pills with Icons */}
                       {room.amenities && room.amenities.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mb-6">
-                          {room.amenities.slice(0, 4).map((amenity, idx) => (
-                            <span
-                              key={idx}
-                              className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-slate-700 dark:text-stone-300"
-                            >
-                              {amenity}
-                            </span>
-                          ))}
+                          {room.amenities.slice(0, 4).map((amenity, idx) => {
+                            const IconComponent = getAmenityIcon(amenity);
+                            return (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-slate-700 dark:text-stone-300"
+                              >
+                                <IconComponent className="w-3 h-3 text-heritage-600 shrink-0" />
+                                <span>{amenity}</span>
+                              </span>
+                            );
+                          })}
                           {room.amenities.length > 4 && (
                             <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-slate-500">
                               +{room.amenities.length - 4} more

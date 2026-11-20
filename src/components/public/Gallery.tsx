@@ -212,6 +212,12 @@ export function Gallery({ photos, hotelName }: GalleryProps) {
           }}
           className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 sm:p-6 overscroll-contain"
         >
+          {/* Top Counter Badge */}
+          <div className="absolute top-4 left-4 z-50 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs font-mono font-semibold shadow-lg">
+            <Camera className="w-3.5 h-3.5 text-amber-400" />
+            <span data-testid="lightbox-counter">Photo {selectedIdx + 1} of {filteredPhotos.length}</span>
+          </div>
+
           {/* Close button */}
           <button
             ref={closeButtonRef}
@@ -263,6 +269,9 @@ export function Gallery({ photos, hotelName }: GalleryProps) {
               <p className="text-stone-400 text-xs mt-1">
                 Photo {selectedIdx + 1} of {filteredPhotos.length} &bull; {hotelName}
               </p>
+              <div className="hidden sm:inline-flex items-center gap-2 mt-2.5 px-3 py-1 rounded-full bg-white/10 text-[11px] text-stone-300 font-mono">
+                <span>Use &larr; &rarr; keys or swipe &bull; Esc to close</span>
+              </div>
             </div>
           </div>
 
