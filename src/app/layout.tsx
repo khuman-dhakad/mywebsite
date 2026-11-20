@@ -68,6 +68,14 @@ export async function generateMetadata(): Promise<Metadata> {
       description,
       images: [heroImage],
     },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: profile.name,
+    },
+    formatDetection: {
+      telephone: true,
+    },
     robots: {
       index: true,
       follow: true,
