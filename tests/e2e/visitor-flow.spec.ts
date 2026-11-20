@@ -88,11 +88,17 @@ test.describe("Visitor Experience & Mobile Flow", () => {
     await expect(attractionsSection.locator("h3:has-text('Hawa Mahal')")).toBeVisible();
   });
 
-  test("should allow copying property address", async ({ page }) => {
+  test("should allow copying property address and saving vCard contact", async ({ page }) => {
     const contactSection = page.locator("#contact");
     await expect(contactSection).toBeVisible();
     const copyBtn = contactSection.locator("button:has-text('Copy Full Address')");
     await expect(copyBtn).toBeVisible();
+
+    const vcardBtn = contactSection.locator("button:has-text('Save Hotel to Phone (vCard)')");
+    await expect(vcardBtn).toBeVisible();
+
+    // Fair transit guide
+    await expect(contactSection.locator("text=Fair Arrival Fare Guide")).toBeVisible();
   });
 
   test("should open accessible lightbox on gallery photo click and close on Escape", async ({ page }) => {
@@ -107,6 +113,7 @@ test.describe("Visitor Experience & Mobile Flow", () => {
     const lightbox = page.locator("div[role='dialog'][aria-label='Image Lightbox']");
     await expect(lightbox).toBeVisible();
     await expect(lightbox.getByRole("button", { name: /Close Lightbox/ })).toBeFocused();
+    await expect(lightbox.locator("[data-testid='lightbox-counter']")).toBeVisible();
 
     // Press Escape to dismiss
     await page.keyboard.press("Escape");
@@ -119,6 +126,12 @@ test.describe("Visitor Experience & Mobile Flow", () => {
     await expect(lightbox).toBeVisible();
     await lightbox.click({ position: { x: 10, y: 10 } });
     await expect(lightbox).not.toBeVisible();
+  });
+
+  test("should render custom branded 404 page for unknown routes", async ({ page }) => {
+    await page.goto("/unknown-nonexistent-route");
+    await expect(page.locator("h1")).toContainText("Lost in the Pink City?");
+    await expect(page.locator("a:has-text('Return to Homepage')")).toBeVisible();
   });
 
   test("should filter gallery photos by category tab", async ({ page }) => {

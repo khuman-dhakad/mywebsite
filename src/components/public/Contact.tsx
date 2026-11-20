@@ -188,22 +188,22 @@ export function Contact({ profile }: ContactProps) {
         </div>
 
         {/* Copy Address Bar */}
-        <div className="mt-8 p-4 sm:p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3 text-left">
+        <div className="mt-8 p-4 sm:p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 text-left min-w-0 flex-1">
             <div className="w-9 h-9 rounded-xl bg-heritage-100 dark:bg-heritage-950 text-heritage-700 dark:text-heritage-400 flex items-center justify-center shrink-0">
               <MapPin className="w-4 h-4" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-stone-400">
                 Postal Address for Taxi / Auto-Rickshaw
               </div>
-              <div className="text-sm font-medium text-slate-800 dark:text-stone-200 leading-snug">
+              <div className="text-sm font-medium text-slate-800 dark:text-stone-200 leading-snug break-words">
                 {profile.address}
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 w-full lg:w-auto shrink-0">
             <button
               type="button"
               onClick={() => downloadVCard(profile)}
