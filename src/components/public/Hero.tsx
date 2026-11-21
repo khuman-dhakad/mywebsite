@@ -19,49 +19,53 @@ export function Hero({ profile }: HeroProps) {
 
   return (
     <section className="relative overflow-hidden bg-stone-50 dark:bg-stone-950 pt-12 pb-12 md:pt-8 md:pb-16 lg:pt-14 lg:pb-24 border-b border-stone-200 dark:border-stone-800">
+      {/* Ambient Luxury Heritage Glow */}
+      <div className="absolute top-1/4 -left-20 w-80 h-80 rounded-full bg-heritage-200/30 dark:bg-heritage-900/10 blur-3xl pointer-events-none -z-10 animate-float" />
+      <div className="absolute bottom-10 right-0 w-96 h-96 rounded-full bg-amber-100/40 dark:bg-amber-950/15 blur-3xl pointer-events-none -z-10 animate-float [animation-delay:2s]" />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
           {/* Text Content */}
           <div className="lg:col-span-7 flex flex-col justify-center">
             {/* Top Local Tag & Season Pill */}
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-heritage-100 dark:bg-heritage-950/80 border border-heritage-200 dark:border-heritage-800 text-heritage-800 dark:text-heritage-300 text-xs sm:text-sm font-semibold w-fit">
+            <div className="flex flex-wrap items-center gap-2 mb-4 animate-fade-in">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-heritage-100 dark:bg-heritage-950/80 border border-heritage-200 dark:border-heritage-800 text-heritage-800 dark:text-heritage-300 text-xs sm:text-sm font-semibold w-fit transition-transform hover:scale-[1.02]">
                 <MapPin className="w-4 h-4 text-heritage-600" />
                 <span>
                   {profile.city}, {profile.state} &bull; Best Direct Rate Guaranteed
                 </span>
               </div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-xs font-semibold">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-xs font-semibold transition-transform hover:scale-[1.02]">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
                 <span>Pink City Season: Pleasant 24&deg;C Nights</span>
               </div>
             </div>
 
             {/* Exactly One H1 for SEO (34px on mobile, 36px-60px on desktop) */}
-            <h1 className="font-serif text-[34px] sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-stone-50 tracking-tight leading-[1.2] md:leading-[1.15] mb-4">
+            <h1 className="font-serif text-[34px] sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-stone-50 tracking-tight leading-[1.2] md:leading-[1.15] mb-4 animate-fade-in-up [animation-delay:100ms]">
               {profile.name}
             </h1>
 
             {/* Tagline */}
             {profile.tagline && (
-              <p className="text-base sm:text-lg md:text-xl font-medium text-heritage-700 dark:text-heritage-400 mb-3">
+              <p className="text-base sm:text-lg md:text-xl font-medium text-heritage-700 dark:text-heritage-400 mb-3 animate-fade-in-up [animation-delay:200ms]">
                 {profile.tagline}
               </p>
             )}
 
             {/* Subtitle / Description (16px base with 1.6 line-height on mobile) */}
-            <p className="text-base sm:text-lg text-slate-600 dark:text-stone-300 leading-relaxed mb-8 max-w-2xl">
+            <p className="text-base sm:text-lg text-slate-600 dark:text-stone-300 leading-relaxed mb-8 max-w-2xl animate-fade-in-up [animation-delay:250ms]">
               {profile.hero_subtitle ||
                 "Experience clean, comfortable, and budget-friendly stay with 24/7 hot water, high-speed Wi-Fi, and traditional hospitality steps from city attractions."}
             </p>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3.5 mb-8">
+            <div className="flex flex-col sm:flex-row gap-3.5 mb-8 animate-fade-in-up [animation-delay:350ms]">
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-base shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 min-h-[48px]"
+                className="luxury-btn-shine inline-flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-semibold text-base shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/35 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 min-h-[48px]"
               >
                 <MessageCircle className="w-5 h-5 fill-current" />
                 <span>Book on WhatsApp</span>
@@ -69,7 +73,7 @@ export function Hero({ profile }: HeroProps) {
 
               <a
                 href={telUrl}
-                className="inline-flex items-center justify-center gap-3 px-6 py-4 rounded-xl border-2 border-slate-300 dark:border-stone-700 hover:border-slate-400 text-slate-900 dark:text-stone-100 font-semibold text-base bg-white dark:bg-stone-900 hover:bg-slate-50 dark:hover:bg-stone-800 transition-all focus:outline-none focus:ring-2 focus:ring-heritage-600 min-h-[48px]"
+                className="inline-flex items-center justify-center gap-3 px-6 py-4 rounded-xl border-2 border-slate-300 dark:border-stone-700 hover:border-heritage-600 active:scale-[0.98] text-slate-900 dark:text-stone-100 font-semibold text-base bg-white dark:bg-stone-900 hover:bg-slate-50 dark:hover:bg-stone-800 transition-all focus:outline-none focus:ring-2 focus:ring-heritage-600 min-h-[48px] shadow-sm hover:shadow"
               >
                 <Phone className="w-5 h-5 text-heritage-700 dark:text-heritage-400" />
                 <span>Call Now: {profile.phone}</span>
@@ -77,7 +81,7 @@ export function Hero({ profile }: HeroProps) {
             </div>
 
             {/* Trust Badges */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-6 border-t border-slate-200 dark:border-stone-800">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-6 border-t border-slate-200 dark:border-stone-800 animate-fade-in-up [animation-delay:450ms]">
               <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-700 dark:text-stone-300">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>0% Commission</span>
@@ -94,8 +98,8 @@ export function Hero({ profile }: HeroProps) {
           </div>
 
           {/* Hero Image Container with LCP Priority */}
-          <div className="lg:col-span-5">
-            <div className="relative aspect-[4/3] sm:aspect-[16/11] lg:aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl border-4 border-white dark:border-stone-800">
+          <div className="lg:col-span-5 animate-fade-in [animation-delay:200ms]">
+            <div className="relative aspect-[4/3] sm:aspect-[16/11] lg:aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl border-4 border-white dark:border-stone-800 group">
               <Image
                 src={heroImage}
                 alt={`${profile.name} exterior and accommodation in ${profile.city}`}
@@ -104,10 +108,10 @@ export function Hero({ profile }: HeroProps) {
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
                 placeholder="blur"
                 blurDataURL={SHIMMER_BLUR_DATA_URL}
-                className="object-cover transition-transform duration-700 hover:scale-105"
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute bottom-3 left-3 bg-white/90 dark:bg-stone-900/90 backdrop-blur-sm px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-800 dark:text-stone-200">
+              <div className="absolute bottom-3 left-3 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-800 dark:text-stone-200 shadow-md border border-white/40 dark:border-stone-700/40 transition-transform duration-300 group-hover:translate-y-[-2px]">
                 ⭐ 4.8 Direct Host Rating
               </div>
             </div>
