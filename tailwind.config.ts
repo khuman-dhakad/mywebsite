@@ -41,6 +41,31 @@ const config: Config = {
       boxShadow: {
         premium: "0 10px 30px -10px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)",
         "premium-dark": "0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3)",
+        "card-hover": "0 20px 35px -10px rgba(180, 83, 9, 0.12), 0 10px 15px -5px rgba(0, 0, 0, 0.04)",
+        "card-hover-dark": "0 20px 35px -10px rgba(0, 0, 0, 0.7), 0 10px 15px -5px rgba(251, 191, 36, 0.08)",
+      },
+      keyframes: {
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        fadeInUp: {
+          "0%": { opacity: "0", transform: "translate3d(0, 16px, 0)" },
+          "100%": { opacity: "1", transform: "translate3d(0, 0, 0)" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+        shimmer: {
+          "100%": { transform: "translateX(100%)" },
+        },
+      },
+      animation: {
+        "fade-in": "fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "fade-in-up": "fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        float: "float 4s ease-in-out infinite",
+        shimmer: "shimmer 2.2s infinite",
       },
     },
   },

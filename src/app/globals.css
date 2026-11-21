@@ -92,3 +92,65 @@ html.dark .text-gold-gradient {
 html.dark .luxury-card-glow {
   box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.15), 0 12px 32px -8px rgba(0, 0, 0, 0.7);
 }
+
+/* Luxury micro-interactions & animated elevations */
+.luxury-hover-lift {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.luxury-hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* Shimmer overlay for primary CTA buttons */
+.luxury-btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.luxury-btn-shine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 100%
+  );
+  transform: skewX(-20deg);
+  transition: none;
+  pointer-events: none;
+}
+
+.luxury-btn-shine:hover::after {
+  animation: btn-shine-sweep 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes btn-shine-sweep {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 200%;
+  }
+}
+
+/* Hardware-accelerated smooth accordion transition */
+.accordion-content-grid {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.accordion-content-grid.is-open {
+  grid-template-rows: 1fr;
+}
+
+.accordion-content-inner {
+  overflow: hidden;
+}
