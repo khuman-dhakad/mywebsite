@@ -173,4 +173,40 @@ test.describe("Visitor Experience & Mobile Flow", () => {
       await expect(bottomBar.locator("a:has-text('Directions')")).toBeVisible();
     }
   });
+
+  test("should toggle FAQ accordion with smooth animated state transition", async ({ page }) => {
+    const faqSection = page.locator("#faq");
+    await expect(faqSection).toBeVisible();
+
+    const firstQuestionBtn = faqSection.locator("button[aria-expanded]").first();
+    await expect(firstQuestionBtn).toBeVisible();
+    await expect(firstQuestionBtn).toHaveAttribute("aria-expanded", "true");
+
+    // Toggle closed
+    await firstQuestionBtn.click();
+    await expect(firstQuestionBtn).toHaveAttribute("aria-expanded", "false");
+
+    // Toggle back open
+    await firstQuestionBtn.click();
+    await expect(firstQuestionBtn).toHaveAttribute("aria-expanded", "true");
+  });
+
+  test("should display animated back-to-top button upon scrolling down", async ({ page }) => {
+    const backToTopAside = page.locator("aside[aria-label='Back to top navigation']");
+    const backToTopBtn = backToTopAside.locator("button");
+    
+    // Initially near top of page, the button should have opacity-0 class
+    await expect(backToTopAside).toHaveClass(/opacity-0/);
+
+    // Scroll down to contact section
+    await page.locator("#contact").scrollIntoViewIfNeeded();
+
+    // Now it should be visible with opacity-100
+    await expect(backToTopAside).toHaveClass(/opacity-100/);
+    await expect(backToTopBtn).toBeVisible();
+
+    // Clicking it triggers scroll to top
+    await backToTopBtn.click();
+    await page.waitForTimeout(400);
+  });
 });

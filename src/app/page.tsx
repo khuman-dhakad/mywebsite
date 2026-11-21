@@ -12,6 +12,7 @@ import { Faq } from "@/components/public/Faq";
 import { Footer } from "@/components/public/Footer";
 import { FloatingWhatsApp } from "@/components/public/FloatingWhatsApp";
 import { MobileBottomBar } from "@/components/public/MobileBottomBar";
+import { BackToTop } from "@/components/public/BackToTop";
 import { StructuredData } from "@/components/public/StructuredData";
 import {
   getHotelProfile,
@@ -97,6 +98,9 @@ export default async function HomePage() {
         directionsUrl={profile.google_map_directions_url}
         prefillMessage={profile.whatsapp_prefill}
       />
+
+      {/* Floating Animated Back to Top Button */}
+      <BackToTop />
     </div>
   );
 }
