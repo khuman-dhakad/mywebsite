@@ -199,3 +199,32 @@ export async function compressAndStripExif(
     reader.readAsDataURL(file);
   });
 }
+
+/**
+ * Formats hotel stay duration into human-readable nights label (e.g. "1 night", "3 nights")
+ */
+export function formatStayDuration(nights: number): string {
+  const safeNights = Math.max(1, Math.round(Number(nights) || 1));
+  return safeNights === 1 ? "1 night" : `${safeNights} nights`;
+}
+
+/**
+ * Formats an ISO date string (YYYY-MM-DD) into displayable format (e.g. "25 Nov 2026")
+ */
+export function formatDisplayDate(isoDate: string): string {
+  if (!isoDate || typeof isoDate !== "string") return "";
+  try {
+    const [year, month, day] = isoDate.split("-").map(Number);
+    if (!year || !month || !day) return isoDate;
+    const date = new Date(year, month - 1, day);
+    if (isNaN(date.getTime())) return isoDate;
+    return new Intl.DateTimeFormat("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(date);
+  } catch {
+    return isoDate;
+  }
+}
+
