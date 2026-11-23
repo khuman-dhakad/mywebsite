@@ -209,4 +209,27 @@ test.describe("Visitor Experience & Mobile Flow", () => {
     await backToTopBtn.click();
     await page.waitForTimeout(400);
   });
+
+  test("should render accessible skip-to-content link targeting main content", async ({ page }) => {
+    const skipLink = page.locator("a[href='#main-content']");
+    await expect(skipLink).toHaveText("Skip to main content");
+    const mainLandmark = page.locator("main#main-content");
+    await expect(mainLandmark).toBeVisible();
+  });
+
+  test("should enforce minimum check-in date constraints in booking modal", async ({ page }) => {
+    const reserveBtn = page.locator("button:has-text('Reserve / Check Dates')").first();
+    await reserveBtn.click();
+
+    const dialog = page.locator("dialog");
+    await expect(dialog).toBeVisible();
+
+    const checkinInput = dialog.locator("#modal-checkin");
+    const todayStr = new Date().toISOString().split("T")[0];
+    await expect(checkinInput).toHaveAttribute("min", todayStr);
+
+    // Close dialog
+    await dialog.getByRole("button", { name: "Close booking inquiry dialog" }).click();
+    await expect(dialog).not.toBeVisible();
+  });
 });
