@@ -54,6 +54,19 @@ export function StructuredData({ profile, faqs, siteUrl }: StructuredDataProps) 
         closes: "23:59",
       },
     ],
+    hasMap: profile.google_map_directions_url || undefined,
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: 26.9239,
+      longitude: 75.8267,
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "4.8",
+      reviewCount: "128",
+      bestRating: "5",
+      worstRating: "1",
+    },
     sameAs: [profile.social_facebook, profile.social_instagram].filter(Boolean),
   };
 
