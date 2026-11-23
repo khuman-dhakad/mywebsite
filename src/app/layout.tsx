@@ -97,6 +97,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en-IN" className={`${playfair.variable} ${jakarta.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+      </head>
       <body className="min-h-screen flex flex-col antialiased selection:bg-amber-200 selection:text-amber-900 dark:selection:bg-amber-900 dark:selection:text-amber-100">
         <a
           href="#main-content"
