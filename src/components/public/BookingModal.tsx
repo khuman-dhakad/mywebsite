@@ -78,6 +78,24 @@ export function BookingModal({
   const nights = dateValidation.valid ? dateValidation.nights : 1;
   const tariff = calculateTariff(currentRoom ? currentRoom.price_per_night : 1200, nights);
 
+  const minCheckOutDate = (() => {
+    if (!checkIn) return tomorrowStr;
+    const d = new Date(checkIn);
+    d.setDate(d.getDate() + 1);
+    return isNaN(d.getTime()) ? tomorrowStr : d.toISOString().split("T")[0];
+  })();
+
+  const handleCheckInChange = (newCheckIn: string) => {
+    setCheckIn(newCheckIn);
+    if (newCheckIn && newCheckIn >= checkOut) {
+      const nextDay = new Date(newCheckIn);
+      nextDay.setDate(nextDay.getDate() + 1);
+      if (!isNaN(nextDay.getTime())) {
+        setCheckOut(nextDay.toISOString().split("T")[0]);
+      }
+    }
+  };
+
   const toggleSpecialRequest = (req: string) => {
     setSpecialRequests((prev) =>
       prev.includes(req) ? prev.filter((r) => r !== req) : [...prev, req]
@@ -213,7 +231,7 @@ Please confirm availability and sharing payment details via UPI or direct bank t
                   type="date"
                   min={todayStr}
                   value={checkIn}
-                  onChange={(e) => setCheckIn(e.target.value)}
+                  onChange={(e) => handleCheckInChange(e.target.value)}
                   className="w-full rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 px-3.5 py-2.5 text-sm text-slate-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-heritage-600"
                   required
                 />
@@ -228,7 +246,7 @@ Please confirm availability and sharing payment details via UPI or direct bank t
                 <input
                   id="modal-checkout"
                   type="date"
-                  min={checkIn || todayStr}
+                  min={minCheckOutDate}
                   value={checkOut}
                   onChange={(e) => setCheckOut(e.target.value)}
                   className="w-full rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 px-3.5 py-2.5 text-sm text-slate-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-heritage-600"
