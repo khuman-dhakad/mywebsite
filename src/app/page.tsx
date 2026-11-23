@@ -48,7 +48,7 @@ export default async function HomePage() {
       <Header profile={profile} />
 
       {/* Main Content Sections */}
-      <main className="flex-1">
+      <main id="main-content" className="flex-1 focus:outline-none">
         <Hero profile={profile} />
         <About profile={profile} />
         {siteConfig.features.enableRooms && <Rooms rooms={rooms} profile={profile} />}

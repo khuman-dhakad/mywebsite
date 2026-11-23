@@ -98,6 +98,12 @@ export default function RootLayout({
   return (
     <html lang="en-IN" className={`${playfair.variable} ${jakarta.variable}`}>
       <body className="min-h-screen flex flex-col antialiased selection:bg-amber-200 selection:text-amber-900 dark:selection:bg-amber-900 dark:selection:text-amber-100">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-heritage-800 focus:text-white focus:rounded-xl focus:shadow-2xl focus:outline-none focus:ring-2 focus:ring-amber-400 font-semibold text-sm transition-transform"
+        >
+          Skip to main content
+        </a>
         {children}
       </body>
     </html>
