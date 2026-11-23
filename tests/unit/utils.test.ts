@@ -6,6 +6,8 @@ import {
   normalizePhoneNumber,
   sanitizeMapEmbedUrl,
   validateImageMagicBytes,
+  formatStayDuration,
+  formatDisplayDate,
   SHIMMER_BLUR_DATA_URL,
 } from "@/lib/utils";
 
@@ -109,6 +111,32 @@ describe("Utility Functions & URL Builders", () => {
 
       const textBuffer = new TextEncoder().encode("<script>alert(1)</script>").buffer;
       expect(validateImageMagicBytes(textBuffer)).toEqual({ valid: false });
+    });
+  });
+
+  describe("formatStayDuration", () => {
+    it("should format single night correctly", () => {
+      expect(formatStayDuration(1)).toBe("1 night");
+      expect(formatStayDuration(0)).toBe("1 night");
+    });
+
+    it("should format multiple nights correctly", () => {
+      expect(formatStayDuration(2)).toBe("2 nights");
+      expect(formatStayDuration(5)).toBe("5 nights");
+    });
+  });
+
+  describe("formatDisplayDate", () => {
+    it("should format valid ISO date string into Indian English date", () => {
+      const formatted = formatDisplayDate("2026-11-25");
+      expect(formatted).toContain("25");
+      expect(formatted).toContain("Nov");
+      expect(formatted).toContain("2026");
+    });
+
+    it("should handle empty or invalid date gracefully", () => {
+      expect(formatDisplayDate("")).toBe("");
+      expect(formatDisplayDate("invalid-date")).toBe("invalid-date");
     });
   });
 
